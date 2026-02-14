@@ -19,9 +19,9 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 2: RLM Examples' (Protocol in workflow.md)**
 
 ## Phase 3: Comprehensive Documentation
-- [ ] **Task: Update README.md**
-    - [ ] Add "Getting Started" section.
-    - [ ] Add "LangChainGo Integration" section.
-- [ ] **Task: Formalize docs/**
-    - [ ] Move and clean up `SPEC.md` and `conductor/protocol.md` into `docs/`.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 3: Comprehensive Documentation' (Protocol in workflow.md)**
+- [x] **Task: Update README.md**
+    - [x] Add "Getting Started" section.
+    - [x] Add "LangChainGo Integration" section.
+- [x] **Task: Formalize docs/**
+    - [x] Move and clean up `SPEC.md` and `conductor/protocol.md` into `docs/`.
+- [x] **Task: Conductor - User Manual Verification 'Phase 3: Comprehensive Documentation' (Protocol in workflow.md)**
