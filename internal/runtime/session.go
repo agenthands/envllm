@@ -15,6 +15,7 @@ import (
 type TextStore interface {
 	Add(text string) TextHandle
 	Get(h TextHandle) (string, bool)
+	Window(h TextHandle, center, radius int) (TextHandle, error)
 }
 
 // Policy defines the resource limits for an RLM session.
