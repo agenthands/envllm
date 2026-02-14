@@ -1,0 +1,31 @@
+# Implementation Plan: SUBCALL & Host Interface
+
+## Phase 1: Host Interface and Accounting
+- [ ] **Task: Define Host Interface**
+    - [ ] Add `Host` interface to `internal/runtime/session.go`.
+    - [ ] Define `SubcallRequest` and `SubcallResponse` types.
+- [ ] **Task: Implement Recursion State**
+    - [ ] Update `Session` struct with `RecursionDepth` and `SubcallCount`.
+    - [ ] Update `Policy` with `MaxRecursionDepth` and `MaxSubcalls`.
+    - [ ] Update `GenerateResult` to include recursion stats in `budgets`.
+- [ ] **Task: Conductor - User Manual Verification 'Phase 1: Host Interface and Accounting' (Protocol in workflow.md)**
+
+## Phase 2: SUBCALL Implementation
+- [ ] **Task: Implement SUBCALL Logic**
+    - [ ] Implement `SUBCALL` operation in `internal/ops/registry.go` (or a dedicated file).
+    - [ ] Logic must:
+        - Validate `DEPTH_COST` vs remaining budget.
+        - Call `s.Host.Subcall`.
+        - Increment subcall counters and depth.
+- [ ] **Task: Test with Mock Host**
+    - [ ] Create a `MockHost` that returns predefined responses.
+    - [ ] Write unit tests for successful subcalls and budget exhaustion.
+- [ ] **Task: Verify Quality**
+    - [ ] Verify 90% coverage for new subcall and accounting logic.
+- [ ] **Task: Conductor - User Manual Verification 'Phase 2: SUBCALL Implementation' (Protocol in workflow.md)**
+
+## Phase 3: Integration & E2E
+- [ ] **Task: E2E Recursive Test**
+    - [ ] Update `cmd/rlmgo/e2e_test.go` with a recursive program (e.g., a cell that calls itself or another task).
+    - [ ] Verify that events and budgets are correctly propagated through the result.
+- [ ] **Task: Conductor - User Manual Verification 'Phase 3: Integration & E2E' (Protocol in workflow.md)**
