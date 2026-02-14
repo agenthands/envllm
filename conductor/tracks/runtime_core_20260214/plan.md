@@ -1,9 +1,9 @@
 # Implementation Plan: Core Runtime & TextStore
 
 ## Phase 1: Values and TextStore
-- [ ] **Task: Define Typed Values**
-    - [ ] Implement `Value` and `Kind` in `internal/runtime`.
-    - [ ] Add JSON marshalling logic for tagged value encoding (`{"kind": "...", "v": ...}`).
+- [x] **Task: Define Typed Values**
+    - [x] Implement `Value` and `Kind` in `internal/runtime`.
+    - [x] Add JSON marshalling logic for tagged value encoding (`{"kind": "...", "v": ...}`).
 - [ ] **Task: Implement TextStore**
     - [ ] Implement `TextStore` in `internal/store`.
     - [ ] Write tests for handle-based access and snippet creation.
