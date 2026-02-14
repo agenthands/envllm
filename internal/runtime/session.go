@@ -115,7 +115,7 @@ func (s *Session) ValidatePath(path string, write bool) error {
 		if err != nil {
 			continue
 		}
-		if strings.HasPrefix(absPath, absWhitelist) {
+		if absPath == absWhitelist || strings.HasPrefix(absPath, absWhitelist+string(filepath.Separator)) {
 			return nil
 		}
 	}
@@ -248,7 +248,7 @@ func (s *Session) evalExpr(expr ast.Expr) (Value, error) {
 	case *ast.IdentExpr:
 		val, ok := s.Env.Get(e.Name)
 		if !ok {
-			return Value{}, fmt.Errorf("undefined variable: %s", e.Name)
+			return Value{Kind: KindString, V: e.Name}, nil
 		}
 		return val, nil
 	case *ast.StringExpr:
