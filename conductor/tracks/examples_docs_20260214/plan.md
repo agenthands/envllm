@@ -1,13 +1,13 @@
 # Implementation Plan: Examples & Docs (LangChainGo)
 
 ## Phase 1: LangChainGo Bridge
-- [ ] **Task: Setup LangChainGo Dependencies**
-    - [ ] Run `go get github.com/tmc/langchaingo`.
-- [ ] **Task: Implement LangChainGo Host**
-    - [ ] Create `examples/bridge/langchain_host.go`.
-    - [ ] Implement `Subcall` using a LangChainGo `llms.Model`.
-    - [ ] Provide a basic implementation of the observation loop.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 1: LangChainGo Bridge' (Protocol in workflow.md)**
+- [x] **Task: Setup LangChainGo Dependencies**
+    - [x] Run `go get github.com/tmc/langchaingo`.
+- [x] **Task: Implement LangChainGo Host**
+    - [x] Create `examples/bridge/langchain_host.go`.
+    - [x] Implement `Subcall` using a LangChainGo `llms.Model`.
+    - [x] Provide a basic implementation of the observation loop.
+- [x] **Task: Conductor - User Manual Verification 'Phase 1: LangChainGo Bridge' (Protocol in workflow.md)**
 
 ## Phase 2: RLM Examples
 - [ ] **Task: Create Example Scripts**
