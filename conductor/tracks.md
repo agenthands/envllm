@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implement File System Capability with Path Whitelisting**
+- [x] **Track: Implement File System Capability with Path Whitelisting**
   *Link: [./tracks/fs_capability_20260214/](./tracks/fs_capability_20260214/)*
