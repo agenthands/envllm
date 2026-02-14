@@ -21,12 +21,12 @@
 - [x] **Task: Verify Runtime Quality**
     - [x] Verify 90% coverage for `internal/runtime`.
     - [x] Run fuzz tests for basic execution patterns (random stmt sequences).
-- [ ] **Task: Conductor - User Manual Verification 'Phase 2: Session and Environment' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 2: Session and Environment' (Protocol in workflow.md)**
 
 ## Phase 3: Result Encoding
-- [ ] **Task: Implement ExecResult Generation**
-    - [ ] Implement result encoding compliant with `schemas/exec_result.schema.json`.
-    - [ ] Implement `vars_delta` tracking per cell.
+- [x] **Task: Implement ExecResult Generation**
+    - [x] Implement result encoding compliant with `schemas/exec_result.schema.json`.
+    - [x] Implement `vars_delta` tracking per cell.
 - [ ] **Task: Verify Protocol Compliance**
     - [ ] Write tests to ensure `ExecResult` validates against the JSON schema.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 3: Result Encoding' (Protocol in workflow.md)**

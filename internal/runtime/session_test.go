@@ -92,12 +92,23 @@ func TestSession_Errors(t *testing.T) {
 	}
 }
 
-func TestEnv_Vars(t *testing.T) {
-	e := NewEnv()
-	e.Define("a", Value{Kind: KindInt, V: 1})
-	vars := e.Vars()
-	if len(vars) != 1 || vars["a"].V != 1 {
-		t.Errorf("Vars() failed")
+func TestSession_GenerateResult(t *testing.T) {
+	s := NewSession(Policy{MaxStmtsPerCell: 10}, nil)
+	s.defineVar("res", Value{Kind: KindInt, V: 123})
+	s.Final = &Value{Kind: KindBool, V: true}
+	
+	res := s.GenerateResult("ok", nil)
+	if res.Status != "ok" {
+		t.Errorf("expected status ok")
+	}
+	if v, ok := res.VarsDelta["res"]; !ok || v.V != 123 {
+		t.Errorf("VarsDelta missing 'res'")
+	}
+	if res.Final == nil || res.Final.V != true {
+		t.Errorf("Final value missing")
+	}
+	if b, ok := res.Budgets["stmts"]; !ok || b.Limit != 10 {
+		t.Errorf("Budgets missing 'stmts'")
 	}
 }
 

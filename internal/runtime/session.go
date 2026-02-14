@@ -36,15 +36,51 @@ type Session struct {
 	// Stats for budgeting
 	StmtsExecuted int
 	StartTime     time.Time
+
+	// Result tracking
+	Events    []Event
+	VarsDelta map[string]Value
 }
 
 func NewSession(policy Policy, ts TextStore) *Session {
 	s := &Session{
-		Env:    NewEnv(),
-		Policy: policy,
+		Env:       NewEnv(),
+		Policy:    policy,
+		VarsDelta: make(map[string]Value),
 	}
 	s.Stores.Text = ts
 	return s
+}
+
+func (s *Session) defineVar(name string, val Value) error {
+	if err := s.Env.Define(name, val); err != nil {
+		return err
+	}
+	s.VarsDelta[name] = val
+	return nil
+}
+
+func (s *Session) GenerateResult(status string, errors []Error) ExecResult {
+	res := ExecResult{
+		SchemaVersion: "obs-0.1",
+		Status:        status,
+		VarsDelta:     s.VarsDelta,
+		Final:         s.Final,
+		Events:        s.Events,
+		Errors:        errors,
+	}
+	
+	// Add budgets
+	res.Budgets = make(map[string]BudgetStats)
+	res.Budgets["stmts"] = BudgetStats{Used: s.StmtsExecuted, Limit: s.Policy.MaxStmtsPerCell}
+	if s.Policy.MaxWallTime > 0 {
+		res.Budgets["wall_time_ms"] = BudgetStats{
+			Used:  int(time.Since(s.StartTime).Milliseconds()),
+			Limit: int(s.Policy.MaxWallTime.Milliseconds()),
+		}
+	}
+	
+	return res
 }
 
 // ExecuteCell runs all statements in a cell.
