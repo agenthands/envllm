@@ -1,13 +1,13 @@
 # Implementation Plan: CLI & REPL Interface
 
 ## Phase 1: Public API & Scaffolding
-- [ ] **Task: Implement pkg/rlmgo**
-    - [ ] Create `pkg/rlmgo/rlmgo.go`.
-    - [ ] Wrap internal components (parse, ops, runtime) into a clean API.
-    - [ ] Write unit tests for the public API.
-- [ ] **Task: Setup CLI Structure**
-    - [ ] Create `cmd/rlmgo/main.go` with basic subcommand routing (run, repl, validate).
-- [ ] **Task: Conductor - User Manual Verification 'Phase 1: Public API & Scaffolding' (Protocol in workflow.md)**
+- [x] **Task: Implement pkg/rlmgo**
+    - [x] Create `pkg/rlmgo/rlmgo.go`.
+    - [x] Wrap internal components (parse, ops, runtime) into a clean API.
+    - [x] Write unit tests for the public API.
+- [x] **Task: Setup CLI Structure**
+    - [x] Create `cmd/rlmgo/main.go` with basic subcommand routing (run, repl, validate).
+- [x] **Task: Conductor - User Manual Verification 'Phase 1: Public API & Scaffolding' (Protocol in workflow.md)**
 
 ## Phase 2: CLI Features
 - [ ] **Task: Implement Run Subcommand**
