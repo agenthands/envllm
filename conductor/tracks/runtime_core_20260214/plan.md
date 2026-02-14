@@ -14,10 +14,10 @@
 - [x] **Task: Implement Environment**
     - [x] Implement `Env` for variable storage and single-assignment enforcement.
     - [x] Write tests for variable scope and reassignment errors.
-- [ ] **Task: Implement Session & Interpreter**
-    - [ ] Implement `Session` and the `Step()` loop in `internal/runtime`.
-    - [ ] Implement `SET_FINAL`, `PRINT`, and `ASSERT` logic.
-    - [ ] Implement statement and memory budget tracking.
+- [x] **Task: Implement Session & Interpreter**
+    - [x] Implement `Session` and the `Step()` loop in `internal/runtime`.
+    - [x] Implement `SET_FINAL`, `PRINT`, and `ASSERT` logic.
+    - [x] Implement statement and memory budget tracking.
 - [ ] **Task: Verify Runtime Quality**
     - [ ] Verify 90% coverage for `internal/runtime`.
     - [ ] Run fuzz tests for basic execution patterns (random stmt sequences).
