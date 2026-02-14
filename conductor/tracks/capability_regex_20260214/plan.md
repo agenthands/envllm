@@ -21,6 +21,6 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 2: Regex Operations' (Protocol in workflow.md)**
 
 ## Phase 3: Integration
-- [ ] **Task: E2E Security & Search Test**
-    - [ ] Update `cmd/rlmgo/e2e_test.go` with a test case that mixes capability denials and regex searches.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 3: Integration' (Protocol in workflow.md)**
+- [x] **Task: E2E Security & Search Test**
+    - [x] Update `cmd/rlmgo/e2e_test.go` with a test case that mixes capability denials and regex searches.
+- [x] **Task: Conductor - User Manual Verification 'Phase 3: Integration' (Protocol in workflow.md)**

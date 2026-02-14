@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/agenthands/rlm-go/internal/lex"
@@ -71,6 +72,7 @@ func TestEndToEnd_Recursive(t *testing.T) {
 	policy := runtime.Policy{
 		MaxSubcalls:       5,
 		MaxRecursionDepth: 10,
+		AllowedCapabilities: map[string]bool{"llm": true},
 	}
 	s := runtime.NewSession(policy, ts)
 	s.Dispatcher = reg
@@ -102,6 +104,62 @@ CELL recurse:
 	}
 	if s.RecursionDepth != 2 {
 		t.Errorf("expected depth 2")
+	}
+}
+
+func TestEndToEnd_RegexAndCapabilities(t *testing.T) {
+	tbl, _ := ops.LoadTable("../../assets/ops.json")
+	reg := ops.NewRegistry(tbl)
+	ts := store.NewTextStore()
+	
+	// Policy WITHOUT 'llm' capability
+	policy := runtime.Policy{
+		MaxStmtsPerCell: 100,
+		AllowedCapabilities: map[string]bool{
+			"pure": true, // Not strictly needed but for clarity
+		},
+	}
+	s := runtime.NewSession(policy, ts)
+	s.Dispatcher = reg
+
+	prompt := "My email is test@example.com."
+	ph := ts.Add(prompt)
+	s.Env.Define("PROMPT", runtime.Value{Kind: runtime.KindText, V: ph})
+
+	// 1. Test FIND_REGEX (pure)
+	code := `RLMDSL 0.1
+CELL regex:
+  FIND_REGEX SOURCE PROMPT PATTERN "[a-z]+@[a-z.]+" MODE "FIRST" INTO email_span
+  SET_FINAL SOURCE email_span
+`
+	l := lex.NewLexer("regex.rlm", code)
+	p := parse.NewParser(l)
+	prog, _ := p.Parse()
+
+	for _, cell := range prog.Cells {
+		_ = s.ExecuteCell(context.Background(), cell)
+	}
+
+	if s.Final == nil || s.Final.Kind != runtime.KindSpan {
+		t.Fatalf("expected span result, got %v", s.Final)
+	}
+	span := s.Final.V.(runtime.Span)
+	if span.Start != 12 { // "My email is " is 12 chars.
+		t.Errorf("expected start 12, got %d", span.Start)
+	}
+
+	// 2. Test Capability Denial (SUBCALL needs 'llm')
+	code2 := `RLMDSL 0.1
+CELL denied:
+  SUBCALL SOURCE PROMPT TASK "summarize" DEPTH_COST 1 INTO out
+`
+	l2 := lex.NewLexer("denied.rlm", code2)
+	p2 := parse.NewParser(l2)
+	prog2, _ := p2.Parse()
+
+	err := s.ExecuteCell(context.Background(), prog2.Cells[0])
+	if err == nil || !strings.Contains(err.Error(), "denied by policy") {
+		t.Errorf("expected capability denied error, got %v", err)
 	}
 }
 
