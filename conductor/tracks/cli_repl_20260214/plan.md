@@ -22,12 +22,12 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 2: CLI Features' (Protocol in workflow.md)**
 
 ## Phase 3: REPL Implementation
-- [ ] **Task: Implement internal/repl**
-    - [ ] Interactive loop using `bufio.Scanner` or similar.
-    - [ ] Session persistence logic.
-- [ ] **Task: REPL UX & Formatting**
-    - [ ] Colorized or formatted output for `ExecResult`.
-    - [ ] Multi-line cell support.
-- [ ] **Task: Final Verification**
-    - [ ] Manual walkthrough of REPL features.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 3: REPL Implementation' (Protocol in workflow.md)**
+- [x] **Task: Implement internal/repl**
+    - [x] Interactive loop using `bufio.Scanner` or similar.
+    - [x] Session persistence logic.
+- [x] **Task: REPL UX & Formatting**
+    - [x] Colorized or formatted output for `ExecResult`.
+    - [x] Multi-line cell support.
+- [x] **Task: Final Verification**
+    - [x] Manual walkthrough of REPL features.
+- [x] **Task: Conductor - User Manual Verification 'Phase 3: REPL Implementation' (Protocol in workflow.md)**

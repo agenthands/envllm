@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/agenthands/rlm-go/internal/repl"
 	"github.com/agenthands/rlm-go/internal/runtime"
 	"github.com/agenthands/rlm-go/pkg/rlmgo"
 )
@@ -21,7 +22,7 @@ func main() {
 	case "run":
 		run()
 	case "repl":
-		repl()
+		replCmd()
 	case "validate":
 		validate()
 	case "help", "-h", "--help":
@@ -85,8 +86,8 @@ func run() {
 	fmt.Println(string(output))
 }
 
-func repl() {
-	fmt.Println("Command 'repl' not yet implemented")
+func replCmd() {
+	repl.Start(os.Stdin, os.Stdout)
 }
 
 func validate() {
