@@ -1,9 +1,9 @@
 # Implementation Plan: Ops Registry & Pure Ops
 
 ## Phase 1: Ops Registry & Loading
-- [ ] **Task: Load Ops Definition**
-    - [ ] Implement `Table` structure in `internal/ops` to hold `ops.json` data.
-    - [ ] Write logic to parse `assets/ops.json`.
+- [x] **Task: Load Ops Definition**
+    - [x] Implement `Table` structure in `internal/ops` to hold `ops.json` data.
+    - [x] Write logic to parse `assets/ops.json`.
 - [ ] **Task: Implement Signature Validation**
     - [ ] Implement keyword order and type checking logic.
     - [ ] Write tests for validation failures (wrong order, wrong kind).
