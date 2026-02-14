@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/agenthands/rlm-go/internal/ops/capability"
 	"github.com/agenthands/rlm-go/internal/ops/pure"
 	"github.com/agenthands/rlm-go/internal/runtime"
 )
@@ -32,6 +33,7 @@ func (r *Registry) registerDefaults() {
 		return pure.Stats(s, args[0])
 	}
 	r.impls["FIND_TEXT"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+		// Table validation ensures these V types are correct based on Kind
 		mode, _ := args[2].V.(string)
 		ignoreCase, _ := args[3].V.(bool)
 		return pure.FindText(s, args[0], args[1], mode, ignoreCase)
@@ -93,6 +95,16 @@ func (r *Registry) registerDefaults() {
 
 		return res.Result, nil
 	}
+	// FS Ops
+	r.impls["READ_FILE"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+		return capability.ReadFile(s, args[0])
+	}
+	r.impls["WRITE_FILE"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+		return capability.WriteFile(s, args[0], args[1])
+	}
+	r.impls["LIST_DIR"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+		return capability.ListDir(s, args[0])
+	}
 }
 
 // Dispatch implements runtime.OpDispatcher.
@@ -136,19 +148,19 @@ func (r *Registry) Dispatch(s *runtime.Session, name string, args []runtime.KwAr
 		return runtime.Value{}, fmt.Errorf("operation %q has no implementation", name)
 	}
 
-	// 3. Prepare positional args for implementation
+	// 4. Prepare positional args for implementation
 	var posArgs []runtime.Value
 	for _, v := range vargs {
 		posArgs = append(posArgs, v.Value)
 	}
 
-	// 4. Execute
+	// 5. Execute
 	res, err := impl(s, posArgs)
 	if err != nil {
 		return runtime.Value{}, err
 	}
 
-	// 5. Final type check
+	// 6. Final type check
 	if op.ResultType != "" && res.Kind != op.ResultType {
 		return runtime.Value{}, fmt.Errorf("%s: result type mismatch: expected %s, got %s", name, op.ResultType, res.Kind)
 	}

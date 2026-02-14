@@ -144,6 +144,52 @@
         }
       ],
       "into": true
+    },
+    {
+      "name": "READ_FILE",
+      "capabilities": [
+        "fs_read"
+      ],
+      "result_type": "TEXT",
+      "signature": [
+        {
+          "kw": "PATH",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "WRITE_FILE",
+      "capabilities": [
+        "fs_write"
+      ],
+      "result_type": "BOOL",
+      "signature": [
+        {
+          "kw": "PATH",
+          "type": "TEXT"
+        },
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "LIST_DIR",
+      "capabilities": [
+        "fs_read"
+      ],
+      "result_type": "JSON",
+      "signature": [
+        {
+          "kw": "PATH",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
     }
   ]
 }

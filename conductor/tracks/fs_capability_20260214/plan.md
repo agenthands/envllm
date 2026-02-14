@@ -10,15 +10,15 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: Path Security' (Protocol in workflow.md)**
 
 ## Phase 2: File Operations
-- [ ] **Task: Update ops.json**
-    - [ ] Add `READ_FILE`, `WRITE_FILE`, and `LIST_DIR` definitions.
-- [ ] **Task: Implement File Ops**
-    - [ ] Implement the operations in a new `internal/ops/capability/fs.go` file.
-    - [ ] Operations must call `s.ValidatePath` before performing any I/O.
-- [ ] **Task: Verify File Ops Quality**
-    - [ ] Write unit tests for successful I/O and various failure modes (file not found, permission denied, out of whitelist).
-    - [ ] Verify 90% coverage for FS code.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 2: File Operations' (Protocol in workflow.md)**
+- [x] **Task: Update ops.json**
+    - [x] Add `READ_FILE`, `WRITE_FILE`, and `LIST_DIR` definitions.
+- [x] **Task: Implement File Ops**
+    - [x] Implement the operations in a new `internal/ops/capability/fs.go` file.
+    - [x] Operations must call `s.ValidatePath` before performing any I/O.
+- [x] **Task: Verify File Ops Quality**
+    - [x] Write unit tests for successful I/O and various failure modes (file not found, permission denied, out of whitelist).
+    - [x] Verify 90% coverage for FS code.
+- [x] **Task: Conductor - User Manual Verification 'Phase 2: File Operations' (Protocol in workflow.md)**
 
 ## Phase 3: Integration
 - [ ] **Task: E2E FS Test**
