@@ -126,7 +126,7 @@ func (r *Registry) Dispatch(s *runtime.Session, name string, args []runtime.KwAr
 		}
 		vargs = append(vargs, ValidatedKwArg{Keyword: arg.Keyword, Value: val})
 	}
-	
+
 	op, err := r.Table.ValidateSignature(name, vargs)
 	if err != nil {
 		return runtime.Value{}, err

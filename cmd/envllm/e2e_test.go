@@ -71,8 +71,8 @@ func TestEndToEnd_Recursive(t *testing.T) {
 	reg := ops.NewRegistry(tbl)
 	ts := store.NewTextStore()
 	policy := runtime.Policy{
-		MaxSubcalls:       5,
-		MaxRecursionDepth: 10,
+		MaxSubcalls:         5,
+		MaxRecursionDepth:   10,
 		AllowedCapabilities: map[string]bool{"llm": true},
 	}
 	s := runtime.NewSession(policy, ts)
@@ -112,7 +112,7 @@ func TestEndToEnd_RegexAndCapabilities(t *testing.T) {
 	tbl, _ := ops.LoadTable("../../assets/ops.json")
 	reg := ops.NewRegistry(tbl)
 	ts := store.NewTextStore()
-	
+
 	// Policy WITHOUT 'llm' capability
 	policy := runtime.Policy{
 		MaxStmtsPerCell: 100,
@@ -169,7 +169,7 @@ func TestEndToEnd_FileSystem(t *testing.T) {
 	tbl, _ := ops.LoadTable("../../assets/ops.json")
 	reg := ops.NewRegistry(tbl)
 	ts := store.NewTextStore()
-	
+
 	policy := runtime.Policy{
 		MaxStmtsPerCell: 100,
 		AllowedCapabilities: map[string]bool{

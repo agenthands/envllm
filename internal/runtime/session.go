@@ -61,7 +61,7 @@ type Session struct {
 	}
 	Policy Policy
 	Final  *Value
-	
+
 	// Stats for budgeting
 	StmtsExecuted  int
 	StartTime      time.Time
@@ -136,32 +136,32 @@ func (s *Session) GenerateResult(status string, errors []Error) ExecResult {
 		Events:        s.Events,
 		Errors:        errors,
 	}
-	
+
 	// Add budgets
 	res.Budgets = make(map[string]BudgetStats)
 	res.Budgets["stmts"] = BudgetStats{Used: s.StmtsExecuted, Limit: s.Policy.MaxStmtsPerCell}
 	res.Budgets["recursion_depth"] = BudgetStats{Used: s.RecursionDepth, Limit: s.Policy.MaxRecursionDepth}
 	res.Budgets["subcalls"] = BudgetStats{Used: s.SubcallCount, Limit: s.Policy.MaxSubcalls}
-	
+
 	if s.Policy.MaxWallTime > 0 {
 		res.Budgets["wall_time_ms"] = BudgetStats{
 			Used:  int(time.Since(s.StartTime).Milliseconds()),
 			Limit: int(s.Policy.MaxWallTime.Milliseconds()),
 		}
 	}
-	
+
 	return res
 }
 
 // ExecuteCell runs all statements in a cell.
 func (s *Session) ExecuteCell(ctx context.Context, cell *ast.Cell) error {
 	s.StartTime = time.Now()
-	
+
 	for _, stmt := range cell.Stmts {
 		if err := s.ExecuteStmt(ctx, stmt); err != nil {
 			return err
 		}
-		
+
 		// Check budgets
 		if s.Policy.MaxStmtsPerCell > 0 && s.StmtsExecuted > s.Policy.MaxStmtsPerCell {
 			return fmt.Errorf("budget exceeded: max statements per cell (%d)", s.Policy.MaxStmtsPerCell)
@@ -170,7 +170,7 @@ func (s *Session) ExecuteCell(ctx context.Context, cell *ast.Cell) error {
 			return fmt.Errorf("budget exceeded: max wall time (%v)", s.Policy.MaxWallTime)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -206,7 +206,7 @@ func (s *Session) ExecuteStmt(ctx context.Context, stmt ast.Stmt) error {
 		if s.Dispatcher == nil {
 			return fmt.Errorf("no operation dispatcher configured")
 		}
-		
+
 		// Evaluate arguments
 		var args []KwArg
 		for _, arg := range st.Args {
@@ -216,19 +216,19 @@ func (s *Session) ExecuteStmt(ctx context.Context, stmt ast.Stmt) error {
 			}
 			args = append(args, KwArg{Keyword: arg.Keyword, Value: val})
 		}
-		
+
 		res, err := s.Dispatcher.Dispatch(s, st.OpName, args)
 		if err != nil {
 			return err
 		}
-		
+
 		// Handle INTO
 		if st.Into != "" {
 			if err := s.defineVar(st.Into, res); err != nil {
 				return err
 			}
 		}
-		
+
 		// Record event
 		s.Events = append(s.Events, Event{
 			T:    "op",
@@ -239,7 +239,7 @@ func (s *Session) ExecuteStmt(ctx context.Context, stmt ast.Stmt) error {
 	default:
 		return fmt.Errorf("unknown statement type: %T", stmt)
 	}
-	
+
 	return nil
 }
 

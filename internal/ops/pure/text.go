@@ -47,9 +47,9 @@ func FindText(s *runtime.Session, source runtime.Value, needle runtime.Value, mo
 // WindowText implements the WINDOW_TEXT operation.
 func WindowText(s *runtime.Session, source runtime.Value, center int, radius int) (runtime.Value, error) {
 	h := source.V.(runtime.TextHandle)
-	
+
 	wh, err := s.Stores.Text.Window(h, center, radius)
-	
+
 	if err != nil {
 		return runtime.Value{}, err
 	}
@@ -61,7 +61,7 @@ func WindowText(s *runtime.Session, source runtime.Value, center int, radius int
 func FindRegex(s *runtime.Session, source runtime.Value, pattern runtime.Value, mode string) (runtime.Value, error) {
 	h := source.V.(runtime.TextHandle)
 	text, _ := s.Stores.Text.Get(h)
-	
+
 	ph := pattern.V.(runtime.TextHandle)
 	pat, _ := s.Stores.Text.Get(ph)
 

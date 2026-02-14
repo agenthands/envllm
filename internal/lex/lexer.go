@@ -35,7 +35,7 @@ func (l *Lexer) readChar() {
 		l.pos = l.readPos
 		l.readPos += size
 	}
-	
+
 	if l.ch == '\n' {
 		l.line++
 		l.col = 0

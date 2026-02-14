@@ -47,7 +47,7 @@ type OpStmt struct {
 }
 
 func (s *OpStmt) Pos() lex.Loc { return s.Loc }
-func (s *OpStmt) stmtNode()   {}
+func (s *OpStmt) stmtNode()    {}
 
 // KwArg represents a keyword-argument pair.
 type KwArg struct {
@@ -69,7 +69,7 @@ type IdentExpr struct {
 }
 
 func (e *IdentExpr) Pos() lex.Loc { return e.Loc }
-func (e *IdentExpr) exprNode()   {}
+func (e *IdentExpr) exprNode()    {}
 
 // StringExpr represents a string literal.
 type StringExpr struct {
@@ -79,7 +79,7 @@ type StringExpr struct {
 }
 
 func (e *StringExpr) Pos() lex.Loc { return e.Loc }
-func (e *StringExpr) exprNode()   {}
+func (e *StringExpr) exprNode()    {}
 
 // IntExpr represents an integer literal.
 type IntExpr struct {
@@ -89,7 +89,7 @@ type IntExpr struct {
 }
 
 func (e *IntExpr) Pos() lex.Loc { return e.Loc }
-func (e *IntExpr) exprNode()   {}
+func (e *IntExpr) exprNode()    {}
 
 // BoolExpr represents a boolean literal.
 type BoolExpr struct {
@@ -99,7 +99,7 @@ type BoolExpr struct {
 }
 
 func (e *BoolExpr) Pos() lex.Loc { return e.Loc }
-func (e *BoolExpr) exprNode()   {}
+func (e *BoolExpr) exprNode()    {}
 
 // SetFinalStmt represents the SET_FINAL command.
 type SetFinalStmt struct {
@@ -109,7 +109,7 @@ type SetFinalStmt struct {
 }
 
 func (s *SetFinalStmt) Pos() lex.Loc { return s.Loc }
-func (s *SetFinalStmt) stmtNode()   {}
+func (s *SetFinalStmt) stmtNode()    {}
 
 // AssertStmt represents the ASSERT command.
 type AssertStmt struct {
@@ -120,7 +120,7 @@ type AssertStmt struct {
 }
 
 func (s *AssertStmt) Pos() lex.Loc { return s.Loc }
-func (s *AssertStmt) stmtNode()   {}
+func (s *AssertStmt) stmtNode()    {}
 
 // PrintStmt represents the PRINT command.
 type PrintStmt struct {
@@ -130,4 +130,4 @@ type PrintStmt struct {
 }
 
 func (s *PrintStmt) Pos() lex.Loc { return s.Loc }
-func (s *PrintStmt) stmtNode()   {}
+func (s *PrintStmt) stmtNode()    {}

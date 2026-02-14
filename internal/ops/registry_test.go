@@ -41,11 +41,11 @@ func TestSubcall(t *testing.T) {
 	reg := NewRegistry(tbl)
 	ts := &mockTextStore{content: make(map[string]string)}
 	s := runtime.NewSession(runtime.Policy{
-		MaxSubcalls: 2, 
-		MaxRecursionDepth: 10,
+		MaxSubcalls:         2,
+		MaxRecursionDepth:   10,
 		AllowedCapabilities: map[string]bool{"llm": true},
 	}, ts)
-	
+
 	host := &mockHost{
 		subcallFunc: func(req runtime.SubcallRequest) (runtime.SubcallResponse, error) {
 			return runtime.SubcallResponse{
@@ -84,8 +84,8 @@ func TestSubcall_BudgetExceeded(t *testing.T) {
 	reg := NewRegistry(tbl)
 	ts := &mockTextStore{content: make(map[string]string)}
 	s := runtime.NewSession(runtime.Policy{
-		MaxSubcalls: 1, 
-		MaxRecursionDepth: 5,
+		MaxSubcalls:         1,
+		MaxRecursionDepth:   5,
 		AllowedCapabilities: map[string]bool{"llm": true},
 	}, ts)
 	s.Host = &mockHost{}
@@ -114,8 +114,8 @@ func TestSubcall_BudgetExceeded(t *testing.T) {
 
 	// Test RecursionDepth exceeded
 	s2 := runtime.NewSession(runtime.Policy{
-		MaxSubcalls: 10, 
-		MaxRecursionDepth: 5,
+		MaxSubcalls:         10,
+		MaxRecursionDepth:   5,
 		AllowedCapabilities: map[string]bool{"llm": true},
 	}, ts)
 	s2.Host = &mockHost{}
@@ -134,7 +134,7 @@ func TestCapabilityGating(t *testing.T) {
 	tbl, _ := LoadTable("../../assets/ops.json")
 	reg := NewRegistry(tbl)
 	ts := &mockTextStore{content: make(map[string]string)}
-	
+
 	// Policy without 'llm' capability
 	s := runtime.NewSession(runtime.Policy{
 		AllowedCapabilities: map[string]bool{},
@@ -166,7 +166,7 @@ func TestCapabilityGating(t *testing.T) {
 
 func TestTable_ValidateSignature_Errors(t *testing.T) {
 	tbl, _ := LoadTable("../../assets/ops.json")
-	
+
 	// Unknown op
 	_, err := tbl.ValidateSignature("UNKNOWN", nil)
 	if err == nil {
@@ -214,9 +214,9 @@ func TestRegistry_Dispatch_AllPure(t *testing.T) {
 	reg := NewRegistry(tbl)
 	ts := &mockTextStore{content: make(map[string]string)}
 	s := runtime.NewSession(runtime.Policy{}, ts)
-	
+
 	h := ts.Add("test")
-	
+
 	// STATS
 	_, err := reg.Dispatch(s, "STATS", []runtime.KwArg{{Keyword: "SOURCE", Value: runtime.Value{Kind: runtime.KindText, V: h}}})
 	if err != nil {

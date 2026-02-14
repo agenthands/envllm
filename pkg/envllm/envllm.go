@@ -38,7 +38,7 @@ type ExecOptions struct {
 // Execute executes the program using the provided options.
 func (p *Program) Execute(ctx context.Context, opt ExecOptions) (runtime.ExecResult, error) {
 	ts := store.NewTextStore()
-	
+
 	// Load ops table (default path for now)
 	tbl, err := ops.LoadTable("assets/ops.json")
 	if err != nil {

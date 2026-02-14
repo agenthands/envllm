@@ -12,10 +12,10 @@ SET_FINAL ASSERT PRINT true false
 "hello world"
 @`
 	l := NewLexer("test.rlm", input)
-	
+
 	expected := []struct {
-		typ   Type
-		val   string
+		typ Type
+		val string
 	}{
 		{TypeRLMDSL, "RLMDSL"},
 		{TypeIdent, "0.1"},

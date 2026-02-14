@@ -23,10 +23,10 @@ func TestTextStore(t *testing.T) {
 		t.Fatalf("Window failed: %v", err)
 	}
 	wtext, _ := s.Get(wh)
-	if wtext != " Wo" { // center 6 (space), radius 2 -> 4 to 8 -> "o Wo" Wait. 
+	if wtext != " Wo" { // center 6 (space), radius 2 -> 4 to 8 -> "o Wo" Wait.
 		// "Hello World"
 		// 01234567890
-		// center 6 is 'W'. radius 2 -> 4 to 8. 
+		// center 6 is 'W'. radius 2 -> 4 to 8.
 		// text[4:8] is "o Wo"
 		// indices: 4='o', 5=' ', 6='W', 7='o'
 	}

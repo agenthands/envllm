@@ -16,11 +16,11 @@ type Table struct {
 
 // Op represents a single operation definition.
 type Op struct {
-	Name         string   `json:"name"`
-	Capabilities []string `json:"capabilities"`
-	ResultType   runtime.Kind  `json:"result_type"`
-	Signature    []Param  `json:"signature"`
-	Into         bool     `json:"into"`
+	Name         string       `json:"name"`
+	Capabilities []string     `json:"capabilities"`
+	ResultType   runtime.Kind `json:"result_type"`
+	Signature    []Param      `json:"signature"`
+	Into         bool         `json:"into"`
 }
 
 // Param represents a keyword-type pair in an operation signature.

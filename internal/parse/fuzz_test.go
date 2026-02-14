@@ -1,8 +1,8 @@
 package parse
 
 import (
-	"testing"
 	"github.com/agenthands/envllm/internal/lex"
+	"testing"
 )
 
 func FuzzParser(f *testing.F) {

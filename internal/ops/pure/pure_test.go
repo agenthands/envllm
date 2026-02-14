@@ -29,7 +29,7 @@ func (m *mockTextStore) Window(h runtime.TextHandle, center, radius int) (runtim
 func TestPureOps(t *testing.T) {
 	ts := &mockTextStore{content: make(map[string]string)}
 	s := runtime.NewSession(runtime.Policy{}, ts)
-	
+
 	h := ts.Add("hello world\nline 2")
 	val := runtime.Value{Kind: runtime.KindText, V: h}
 
@@ -64,7 +64,7 @@ func TestPureOps(t *testing.T) {
 	if res.V.(int) != 0 {
 		t.Errorf("expected pos 0, got %v", res.V)
 	}
-	
+
 	res, _ = FindText(s, val, nval, "LAST", false)
 	if res.V.(int) != 6 {
 		t.Errorf("expected pos 6 for LAST, got %v", res.V)
@@ -81,7 +81,7 @@ func TestPureOps(t *testing.T) {
 	pval := runtime.Value{Kind: runtime.KindText, V: pat}
 	res, _ = FindRegex(s, val, pval, "FIRST")
 	span := res.V.(runtime.Span)
-	if span.Start != 17 { // "line 2" -> "2" is at end. 
+	if span.Start != 17 { // "line 2" -> "2" is at end.
 		// "hello world\nline 2"
 		// 012345678901 2345678
 		// Indices: 12=\n, 13=l, 14=i, 15=n, 16=e, 17=' ', 18=2
@@ -111,7 +111,7 @@ func TestPureOps(t *testing.T) {
 func TestPureOps_Errors(t *testing.T) {
 	ts := &mockTextStore{content: make(map[string]string)}
 	s := runtime.NewSession(runtime.Policy{}, ts)
-	
+
 	// JSONParse error
 	h := ts.Add("{ invalid")
 	val := runtime.Value{Kind: runtime.KindText, V: h}

@@ -19,7 +19,7 @@ const PROMPT = "rlm> "
 // Start starts the REPL.
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-	
+
 	// Setup session
 	ts := store.NewTextStore()
 	tbl, err := ops.LoadTable("assets/ops.json")
@@ -72,11 +72,11 @@ func Start(in io.Reader, out io.Writer) {
 				status = "error"
 				errs = append(errs, runtime.Error{Message: err.Error()})
 			}
-			
+
 			res := session.GenerateResult(status, errs)
 			output, _ := res.ToJSON()
 			fmt.Fprintln(out, string(output))
-			
+
 			// Clear delta for next turn
 			session.VarsDelta = make(map[string]runtime.Value)
 		}

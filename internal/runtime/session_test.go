@@ -81,7 +81,7 @@ func TestSession_WallTime(t *testing.T) {
 			&ast.PrintStmt{Source: &ast.IntExpr{Value: 2}},
 		},
 	}
-	
+
 	err := s.ExecuteCell(context.Background(), cell)
 	if err == nil {
 		t.Errorf("expected wall time budget error")
@@ -130,7 +130,7 @@ func TestSession_EvalExpr_Ident(t *testing.T) {
 
 func TestSession_EvalExpr_Errors(t *testing.T) {
 	s := NewSession(Policy{}, nil)
-	
+
 	// Test raw string
 	val, _ := s.evalExpr(&ast.StringExpr{Value: "raw"})
 	if val.Kind != KindString {
@@ -147,14 +147,14 @@ func TestSession_EvalExpr_Errors(t *testing.T) {
 
 func TestSession_ExecuteStmt_Errors(t *testing.T) {
 	s := NewSession(Policy{}, nil)
-	
+
 	// Unknown statement type
 	type unknownStmt struct{ ast.Stmt }
 	err := s.ExecuteStmt(context.Background(), &unknownStmt{})
 	if err == nil {
 		t.Errorf("expected error for unknown statement type")
 	}
-	
+
 	// SetFinal error (undefined var)
 	err = s.ExecuteStmt(context.Background(), &ast.SetFinalStmt{Source: &ast.IdentExpr{Name: "undef"}})
 	if err == nil {
@@ -200,7 +200,7 @@ func TestSession_GenerateResult(t *testing.T) {
 	s := NewSession(Policy{MaxStmtsPerCell: 10}, nil)
 	s.defineVar("res", Value{Kind: KindInt, V: 123})
 	s.Final = &Value{Kind: KindBool, V: true}
-	
+
 	res := s.GenerateResult("ok", nil)
 	if res.Status != "ok" {
 		t.Errorf("expected status ok")

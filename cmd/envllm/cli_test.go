@@ -15,7 +15,7 @@ func TestCLI_Validate(t *testing.T) {
 
 	// Test validate
 	os.Args = []string{"envllm", "validate", "../../test.rlm"}
-	
+
 	output := captureOutput(func() {
 		main()
 	})
@@ -30,7 +30,7 @@ func TestCLI_Run(t *testing.T) {
 	defer func() { os.Args = oldArgs }()
 
 	os.Args = []string{"envllm", "run", "../../test.rlm"}
-	
+
 	output := captureOutput(func() {
 		// main calls os.Exit on error, but since we are in test it won't exit if we don't let it.
 		// Actually, run() doesn't call Exit if it's successful.

@@ -14,7 +14,7 @@ type Validator struct {
 
 func NewValidator(schemaPath string) (*Validator, error) {
 	compiler := jsonschema.NewCompiler()
-	
+
 	schema, err := compiler.Compile(schemaPath)
 	if err != nil {
 		return nil, err

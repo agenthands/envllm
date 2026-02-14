@@ -47,7 +47,7 @@ func run() {
 	runCmd := flag.NewFlagSet("run", flag.ExitOnError)
 	maxStmts := runCmd.Int("max-stmts", 100, "Maximum statements per cell")
 	timeout := runCmd.Duration("timeout", 0, "Maximum wall time for execution")
-	
+
 	if len(os.Args) < 3 {
 		fmt.Println("Usage: envllm run <file> [flags]")
 		runCmd.PrintDefaults()

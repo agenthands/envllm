@@ -6,7 +6,7 @@ import (
 
 func TestEnv(t *testing.T) {
 	e := NewEnv()
-	
+
 	val := Value{Kind: KindInt, V: 42}
 	if err := e.Define("x", val); err != nil {
 		t.Fatalf("Define failed: %v", err)

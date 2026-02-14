@@ -25,10 +25,10 @@ func JSONParse(s *runtime.Session, source runtime.Value) (runtime.Value, error) 
 // Simplistic implementation for now: only works for maps.
 func JSONGet(s *runtime.Session, source runtime.Value, path string) (runtime.Value, error) {
 	data := source.V
-	
+
 	parts := strings.Split(path, ".")
 	curr := data
-	
+
 	for _, part := range parts {
 		if part == "" {
 			continue

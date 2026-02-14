@@ -10,13 +10,15 @@ import (
 
 type mockTextStore struct {
 	content map[string]string
-	nextID int
+	nextID  int
 }
 
 func (m *mockTextStore) Add(text string) runtime.TextHandle {
 	m.nextID++
 	id := filepath.Base(text) // Just for test
-	if len(id) > 10 { id = "t1" }
+	if len(id) > 10 {
+		id = "t1"
+	}
 	m.content[id] = text
 	return runtime.TextHandle{ID: id, Bytes: len(text)}
 }
@@ -87,7 +89,7 @@ func TestFS_Ops(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error for non-existent dir")
 	}
-	
+
 	// Test WriteFile with KindText source
 	srcHandle := ts.Add("content from handle")
 	_, err = WriteFile(s, runtime.Value{Kind: runtime.KindString, V: filePath}, runtime.Value{Kind: runtime.KindText, V: srcHandle})
