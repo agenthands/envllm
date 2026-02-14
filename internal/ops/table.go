@@ -2,6 +2,7 @@ package ops
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/agenthands/rlm-go/internal/runtime"
@@ -55,4 +56,54 @@ func LoadTable(path string) (*Table, error) {
 	}
 
 	return t, nil
+}
+
+// ValidatedKwArg represents a keyword-value pair that has been type-checked.
+type ValidatedKwArg struct {
+	Keyword string
+	Value   runtime.Value
+}
+
+// ValidateSignature checks if an operation statement matches its definition.
+func (t *Table) ValidateSignature(name string, args []ValidatedKwArg) (*Op, error) {
+	op, ok := t.Ops[name]
+	if !ok {
+		return nil, fmt.Errorf("unknown operation: %s", name)
+	}
+
+	if len(args) != len(op.Signature) {
+		return nil, fmt.Errorf("%s: expected %d arguments, got %d", name, len(op.Signature), len(args))
+	}
+
+	for i, param := range op.Signature {
+		arg := args[i]
+		if arg.Keyword != param.Kw {
+			return nil, fmt.Errorf("%s: argument %d keyword mismatch: expected %s, got %s", name, i, param.Kw, arg.Keyword)
+		}
+
+		// Type checking
+		if param.Type != "" && arg.Value.Kind != param.Type {
+			return nil, fmt.Errorf("%s: argument %s type mismatch: expected %s, got %s", name, param.Kw, param.Type, arg.Value.Kind)
+		}
+
+		// Enum checking
+		if len(param.Enum) > 0 {
+			val, ok := arg.Value.V.(string)
+			if !ok {
+				return nil, fmt.Errorf("%s: argument %s must be a string for enum check", name, param.Kw)
+			}
+			found := false
+			for _, e := range param.Enum {
+				if e == val {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return nil, fmt.Errorf("%s: argument %s invalid enum value: %s", name, param.Kw, val)
+			}
+		}
+	}
+
+	return op, nil
 }

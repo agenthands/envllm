@@ -4,9 +4,9 @@
 - [x] **Task: Load Ops Definition**
     - [x] Implement `Table` structure in `internal/ops` to hold `ops.json` data.
     - [x] Write logic to parse `assets/ops.json`.
-- [ ] **Task: Implement Signature Validation**
-    - [ ] Implement keyword order and type checking logic.
-    - [ ] Write tests for validation failures (wrong order, wrong kind).
+- [x] **Task: Implement Signature Validation**
+    - [x] Implement keyword order and type checking logic.
+    - [x] Write tests for validation failures (wrong order, wrong kind).
 - [ ] **Task: Conductor - User Manual Verification 'Phase 1: Ops Registry & Loading' (Protocol in workflow.md)**
 
 ## Phase 2: Pure Ops Implementation
