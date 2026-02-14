@@ -10,15 +10,15 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: Capability Enforcement' (Protocol in workflow.md)**
 
 ## Phase 2: Regex Operations
-- [ ] **Task: Update ops.json**
-    - [ ] Add `FIND_REGEX` definition to `assets/ops.json`.
-- [ ] **Task: Implement Regex Logic**
-    - [ ] Implement `FindRegex` in `internal/ops/pure/text.go`.
-    - [ ] Add support for `SPAN` result type.
-- [ ] **Task: Verify Regex Quality**
-    - [ ] Write tests for various patterns, including capture groups and complex matches.
-    - [ ] Verify 90% coverage for regex-related code.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 2: Regex Operations' (Protocol in workflow.md)**
+- [x] **Task: Update ops.json**
+    - [x] Add `FIND_REGEX` definition to `assets/ops.json`.
+- [x] **Task: Implement Regex Logic**
+    - [x] Implement `FindRegex` in `internal/ops/pure/text.go`.
+    - [x] Add support for `SPAN` result type.
+- [x] **Task: Verify Regex Quality**
+    - [x] Write tests for various patterns, including capture groups and complex matches.
+    - [x] Verify 90% coverage for regex-related code.
+- [x] **Task: Conductor - User Manual Verification 'Phase 2: Regex Operations' (Protocol in workflow.md)**
 
 ## Phase 3: Integration
 - [ ] **Task: E2E Security & Search Test**

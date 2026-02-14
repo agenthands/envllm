@@ -1,6 +1,8 @@
 package pure
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/agenthands/rlm-go/internal/runtime"
@@ -53,4 +55,32 @@ func WindowText(s *runtime.Session, source runtime.Value, center int, radius int
 	}
 
 	return runtime.Value{Kind: runtime.KindText, V: wh}, nil
+}
+
+// FindRegex implements the FIND_REGEX operation.
+func FindRegex(s *runtime.Session, source runtime.Value, pattern runtime.Value, mode string) (runtime.Value, error) {
+	h := source.V.(runtime.TextHandle)
+	text, _ := s.Stores.Text.Get(h)
+	
+	ph := pattern.V.(runtime.TextHandle)
+	pat, _ := s.Stores.Text.Get(ph)
+
+	re, err := regexp.Compile(pat)
+	if err != nil {
+		return runtime.Value{}, fmt.Errorf("FIND_REGEX invalid pattern %q: %v", pat, err)
+	}
+
+	indices := re.FindAllStringIndex(text, -1)
+	if len(indices) == 0 {
+		return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: -1, End: -1}}, nil
+	}
+
+	var match []int
+	if mode == "FIRST" {
+		match = indices[0]
+	} else if mode == "LAST" {
+		match = indices[len(indices)-1]
+	}
+
+	return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: match[0], End: match[1]}}, nil
 }

@@ -119,6 +119,31 @@
         }
       ],
       "into": true
+    },
+    {
+      "name": "FIND_REGEX",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "SPAN",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "PATTERN",
+          "type": "TEXT"
+        },
+        {
+          "kw": "MODE",
+          "enum": [
+            "FIRST",
+            "LAST"
+          ]
+        }
+      ],
+      "into": true
     }
   ]
 }

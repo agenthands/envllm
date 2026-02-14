@@ -75,6 +75,37 @@ func TestPureOps(t *testing.T) {
 	if res.Kind != runtime.KindText {
 		t.Errorf("expected KindText")
 	}
+
+	// Test FindRegex
+	pat := ts.Add(`[0-9]+`)
+	pval := runtime.Value{Kind: runtime.KindText, V: pat}
+	res, _ = FindRegex(s, val, pval, "FIRST")
+	span := res.V.(runtime.Span)
+	if span.Start != 17 { // "line 2" -> "2" is at end. 
+		// "hello world\nline 2"
+		// 012345678901 2345678
+		// Indices: 12=\n, 13=l, 14=i, 15=n, 16=e, 17=' ', 18=2
+		// Wait. 18 is '2'.
+	}
+	if span.Start != 17 {
+		t.Errorf("expected span.start 17, got %d", span.Start)
+	}
+
+	// Test FindRegex LAST
+	res, _ = FindRegex(s, val, pval, "LAST")
+	span = res.V.(runtime.Span)
+	if span.Start != 17 {
+		t.Errorf("expected span.start 17 for LAST, got %d", span.Start)
+	}
+
+	// Test FindRegex No Match
+	nh := ts.Add("nomatch")
+	npat := runtime.Value{Kind: runtime.KindText, V: nh}
+	res, _ = FindRegex(s, val, npat, "FIRST")
+	span = res.V.(runtime.Span)
+	if span.Start != -1 {
+		t.Errorf("expected span.start -1, got %d", span.Start)
+	}
 }
 
 func TestPureOps_Errors(t *testing.T) {
@@ -101,5 +132,13 @@ func TestPureOps_Errors(t *testing.T) {
 	_, err = JSONGet(s, pj, "b")
 	if err == nil {
 		t.Errorf("expected error for missing key in JSONGet")
+	}
+
+	// FindRegex error (invalid pattern)
+	ih := ts.Add("[")
+	ival := runtime.Value{Kind: runtime.KindText, V: ih}
+	_, err = FindRegex(s, val, ival, "FIRST")
+	if err == nil {
+		t.Errorf("expected error for invalid regex pattern")
 	}
 }

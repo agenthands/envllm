@@ -39,6 +39,9 @@ func (r *Registry) registerDefaults() {
 	r.impls["WINDOW_TEXT"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 		return pure.WindowText(s, args[0], args[1].V.(int), args[2].V.(int))
 	}
+	r.impls["FIND_REGEX"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+		return pure.FindRegex(s, args[0], args[1], args[2].V.(string))
+	}
 	// JSON Ops
 	r.impls["JSON_PARSE"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 		return pure.JSONParse(s, args[0])
