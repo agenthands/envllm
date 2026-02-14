@@ -10,16 +10,16 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: Public API & Scaffolding' (Protocol in workflow.md)**
 
 ## Phase 2: CLI Features
-- [ ] **Task: Implement Run Subcommand**
-    - [ ] Logic to read file, compile, and execute.
-    - [ ] Flag parsing for budgets.
-- [ ] **Task: Implement Validate Subcommand**
-    - [ ] Logic to parse and validate without execution.
-- [ ] **Task: Test CLI**
-    - [ ] Integration tests for CLI subcommands.
-- [ ] **Task: Verify CLI Quality**
-    - [ ] Ensure 80% coverage for CLI/glue code (as per workflow).
-- [ ] **Task: Conductor - User Manual Verification 'Phase 2: CLI Features' (Protocol in workflow.md)**
+- [x] **Task: Implement Run Subcommand**
+    - [x] Logic to read file, compile, and execute.
+    - [x] Flag parsing for budgets.
+- [x] **Task: Implement Validate Subcommand**
+    - [x] Logic to parse and validate without execution.
+- [x] **Task: Test CLI**
+    - [x] Integration tests for CLI subcommands.
+- [x] **Task: Verify CLI Quality**
+    - [x] Ensure 80% coverage for CLI/glue code (as per workflow).
+- [x] **Task: Conductor - User Manual Verification 'Phase 2: CLI Features' (Protocol in workflow.md)**
 
 ## Phase 3: REPL Implementation
 - [ ] **Task: Implement internal/repl**
