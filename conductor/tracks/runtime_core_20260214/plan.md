@@ -4,10 +4,10 @@
 - [x] **Task: Define Typed Values**
     - [x] Implement `Value` and `Kind` in `internal/runtime`.
     - [x] Add JSON marshalling logic for tagged value encoding (`{"kind": "...", "v": ...}`).
-- [ ] **Task: Implement TextStore**
-    - [ ] Implement `TextStore` in `internal/store`.
-    - [ ] Write tests for handle-based access and snippet creation.
-    - [ ] Verify 90% coverage for `internal/store`.
+- [x] **Task: Implement TextStore**
+    - [x] Implement `TextStore` in `internal/store`.
+    - [x] Write tests for handle-based access and snippet creation.
+    - [x] Verify 90% coverage for `internal/store`.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 1: Values and TextStore' (Protocol in workflow.md)**
 
 ## Phase 2: Session and Environment
