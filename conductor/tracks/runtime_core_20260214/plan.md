@@ -18,9 +18,9 @@
     - [x] Implement `Session` and the `Step()` loop in `internal/runtime`.
     - [x] Implement `SET_FINAL`, `PRINT`, and `ASSERT` logic.
     - [x] Implement statement and memory budget tracking.
-- [ ] **Task: Verify Runtime Quality**
-    - [ ] Verify 90% coverage for `internal/runtime`.
-    - [ ] Run fuzz tests for basic execution patterns (random stmt sequences).
+- [x] **Task: Verify Runtime Quality**
+    - [x] Verify 90% coverage for `internal/runtime`.
+    - [x] Run fuzz tests for basic execution patterns (random stmt sequences).
 - [ ] **Task: Conductor - User Manual Verification 'Phase 2: Session and Environment' (Protocol in workflow.md)**
 
 ## Phase 3: Result Encoding
