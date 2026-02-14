@@ -1,6 +1,7 @@
 package ops
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/agenthands/rlm-go/internal/ops/pure"
@@ -44,6 +45,50 @@ func (r *Registry) registerDefaults() {
 	}
 	r.impls["JSON_GET"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 		return pure.JSONGet(s, args[0], args[1].V.(string))
+	}
+	// Recursive Ops
+	r.impls["SUBCALL"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+		if s.Host == nil {
+			return runtime.Value{}, fmt.Errorf("SUBCALL failed: no host configured")
+		}
+
+		source := args[0].V.(runtime.TextHandle)
+		taskHandle := args[1].V.(runtime.TextHandle)
+		depthCost := args[2].V.(int)
+
+		// Get task string from handle
+		task, ok := s.Stores.Text.Get(taskHandle)
+		if !ok {
+			return runtime.Value{}, fmt.Errorf("SUBCALL failed: task text not found")
+		}
+
+		// Validate budgets
+		if s.Policy.MaxSubcalls > 0 && s.SubcallCount >= s.Policy.MaxSubcalls {
+			return runtime.Value{}, fmt.Errorf("budget exceeded: max subcalls reached")
+		}
+		if s.Policy.MaxRecursionDepth > 0 && s.RecursionDepth+depthCost > s.Policy.MaxRecursionDepth {
+			return runtime.Value{}, fmt.Errorf("budget exceeded: recursion depth limit reached (cost %d)", depthCost)
+		}
+
+		// Prepare request
+		req := runtime.SubcallRequest{
+			Source:    source,
+			Task:      task,
+			DepthCost: depthCost,
+			Budgets:   make(map[string]int), // TODO: populate with remaining budgets
+		}
+
+		// Execute call
+		res, err := s.Host.Subcall(context.Background(), req)
+		if err != nil {
+			return runtime.Value{}, fmt.Errorf("host subcall failed: %v", err)
+		}
+
+		// Update stats
+		s.SubcallCount++
+		s.RecursionDepth += depthCost
+
+		return res.Result, nil
 	}
 }
 

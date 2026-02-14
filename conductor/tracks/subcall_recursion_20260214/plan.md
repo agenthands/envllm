@@ -11,18 +11,18 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: Host Interface and Accounting' (Protocol in workflow.md)**
 
 ## Phase 2: SUBCALL Implementation
-- [ ] **Task: Implement SUBCALL Logic**
-    - [ ] Implement `SUBCALL` operation in `internal/ops/registry.go` (or a dedicated file).
-    - [ ] Logic must:
+- [x] **Task: Implement SUBCALL Logic**
+    - [x] Implement `SUBCALL` operation in `internal/ops/registry.go` (or a dedicated file).
+    - [x] Logic must:
         - Validate `DEPTH_COST` vs remaining budget.
         - Call `s.Host.Subcall`.
         - Increment subcall counters and depth.
-- [ ] **Task: Test with Mock Host**
-    - [ ] Create a `MockHost` that returns predefined responses.
-    - [ ] Write unit tests for successful subcalls and budget exhaustion.
-- [ ] **Task: Verify Quality**
-    - [ ] Verify 90% coverage for new subcall and accounting logic.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 2: SUBCALL Implementation' (Protocol in workflow.md)**
+- [x] **Task: Test with Mock Host**
+    - [x] Create a `MockHost` that returns predefined responses.
+    - [x] Write unit tests for successful subcalls and budget exhaustion.
+- [x] **Task: Verify Quality**
+    - [x] Verify 90% coverage for new subcall and accounting logic.
+- [x] **Task: Conductor - User Manual Verification 'Phase 2: SUBCALL Implementation' (Protocol in workflow.md)**
 
 ## Phase 3: Integration & E2E
 - [ ] **Task: E2E Recursive Test**
