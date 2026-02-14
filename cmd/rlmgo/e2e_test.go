@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -160,6 +161,51 @@ CELL denied:
 	err := s.ExecuteCell(context.Background(), prog2.Cells[0])
 	if err == nil || !strings.Contains(err.Error(), "denied by policy") {
 		t.Errorf("expected capability denied error, got %v", err)
+	}
+}
+
+func TestEndToEnd_FileSystem(t *testing.T) {
+	tmpDir := t.TempDir()
+	tbl, _ := ops.LoadTable("../../assets/ops.json")
+	reg := ops.NewRegistry(tbl)
+	ts := store.NewTextStore()
+	
+	policy := runtime.Policy{
+		MaxStmtsPerCell: 100,
+		AllowedCapabilities: map[string]bool{
+			"fs_read":  true,
+			"fs_write": true,
+		},
+		AllowedReadPaths:  []string{tmpDir},
+		AllowedWritePaths: []string{tmpDir},
+	}
+	s := runtime.NewSession(policy, ts)
+	s.Dispatcher = reg
+
+	filePath := filepath.Join(tmpDir, "e2e.txt")
+	ph := ts.Add(filePath)
+	s.Env.Define("FILE_PATH", runtime.Value{Kind: runtime.KindText, V: ph})
+
+	code := `RLMDSL 0.1
+CELL fs:
+  WRITE_FILE PATH FILE_PATH SOURCE "e2e content" INTO ok
+  READ_FILE PATH FILE_PATH INTO content
+  SET_FINAL SOURCE content
+`
+	l := lex.NewLexer("fs.rlm", code)
+	p := parse.NewParser(l)
+	prog, _ := p.Parse()
+
+	for _, cell := range prog.Cells {
+		_ = s.ExecuteCell(context.Background(), cell)
+	}
+
+	if s.Final == nil || s.Final.Kind != runtime.KindText {
+		t.Fatalf("expected text result, got %v", s.Final)
+	}
+	resText, _ := ts.Get(s.Final.V.(runtime.TextHandle))
+	if resText != "e2e content" {
+		t.Errorf("expected 'e2e content', got %q", resText)
 	}
 }
 

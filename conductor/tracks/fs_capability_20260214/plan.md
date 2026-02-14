@@ -21,6 +21,6 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 2: File Operations' (Protocol in workflow.md)**
 
 ## Phase 3: Integration
-- [ ] **Task: E2E FS Test**
-    - [ ] Update `cmd/rlmgo/e2e_test.go` with a test case that writes a snippet to a file and then reads it back.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 3: Integration' (Protocol in workflow.md)**
+- [x] **Task: E2E FS Test**
+    - [x] Update `cmd/rlmgo/e2e_test.go` with a test case that writes a snippet to a file and then reads it back.
+- [x] **Task: Conductor - User Manual Verification 'Phase 3: Integration' (Protocol in workflow.md)**
