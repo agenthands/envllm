@@ -27,6 +27,6 @@
 - [x] **Task: Implement ExecResult Generation**
     - [x] Implement result encoding compliant with `schemas/exec_result.schema.json`.
     - [x] Implement `vars_delta` tracking per cell.
-- [ ] **Task: Verify Protocol Compliance**
-    - [ ] Write tests to ensure `ExecResult` validates against the JSON schema.
+- [x] **Task: Verify Protocol Compliance**
+    - [x] Write tests to ensure `ExecResult` validates against the JSON schema.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 3: Result Encoding' (Protocol in workflow.md)**

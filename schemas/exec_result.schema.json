@@ -3,24 +3,23 @@
   "title": "RLMDSL ExecResult",
   "type": "object",
   "required": [
-    "output",
-    "trace"
+    "schema_version",
+    "status",
+    "vars_delta",
+    "budgets",
+    "events",
+    "errors",
+    "truncated"
   ],
   "properties": {
-    "output": {
-      "type": "object"
-    },
-    "trace": {
-      "type": "array",
-      "items": {
-        "type": "object"
-      }
-    },
-    "vars": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "object"
-      }
-    }
+    "schema_version": { "type": "string" },
+    "status": { "type": "string", "enum": ["ok", "error", "budget_exceeded", "capability_denied"] },
+    "vars_delta": { "type": "object" },
+    "result": { "type": ["object", "null"] },
+    "final": { "type": ["object", "null"] },
+    "budgets": { "type": "object" },
+    "events": { "type": "array" },
+    "errors": { "type": "array" },
+    "truncated": { "type": "object" }
   }
 }
