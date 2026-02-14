@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implement CLI and REPL Interface**
+- [x] **Track: Implement CLI and REPL Interface**
   *Link: [./tracks/cli_repl_20260214/](./tracks/cli_repl_20260214/)*
