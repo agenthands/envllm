@@ -168,6 +168,34 @@ func TestSession_ExecuteStmt_Errors(t *testing.T) {
 	}
 }
 
+func TestSession_ValidatePath(t *testing.T) {
+	policy := Policy{
+		AllowedReadPaths:  []string{"/tmp/rlm/read", "./local/read"},
+		AllowedWritePaths: []string{"/tmp/rlm/write"},
+	}
+	s := NewSession(policy, nil)
+
+	tests := []struct {
+		path  string
+		write bool
+		want  bool
+	}{
+		{"/tmp/rlm/read/file.txt", false, true},
+		{"/tmp/rlm/read/../read/file.txt", false, true},
+		{"/tmp/rlm/secret.txt", false, false},
+		{"/tmp/rlm/write/out.txt", true, true},
+		{"/tmp/rlm/read/out.txt", true, false},
+		{"./local/read/file.txt", false, true},
+	}
+
+	for _, tt := range tests {
+		err := s.ValidatePath(tt.path, tt.write)
+		if (err == nil) != tt.want {
+			t.Errorf("ValidatePath(%q, %v) error = %v, want success = %v", tt.path, tt.write, err, tt.want)
+		}
+	}
+}
+
 func TestSession_GenerateResult(t *testing.T) {
 	s := NewSession(Policy{MaxStmtsPerCell: 10}, nil)
 	s.defineVar("res", Value{Kind: KindInt, V: 123})

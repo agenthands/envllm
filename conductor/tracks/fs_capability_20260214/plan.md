@@ -1,13 +1,13 @@
 # Implementation Plan: File System & Whitelisting
 
 ## Phase 1: Path Security
-- [ ] **Task: Update Policy and Path Validation**
-    - [ ] Add `AllowedReadPaths` and `AllowedWritePaths` to `runtime.Policy`.
-    - [ ] Implement `ValidatePath(path, mode)` in `internal/runtime/session.go`.
-- [ ] **Task: Verify Path Security**
-    - [ ] Unit tests for absolute paths, relative paths, and traversal attempts (`../`).
-    - [ ] Ensure paths outside the whitelist are correctly identified.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 1: Path Security' (Protocol in workflow.md)**
+- [x] **Task: Update Policy and Path Validation**
+    - [x] Add `AllowedReadPaths` and `AllowedWritePaths` to `runtime.Policy`.
+    - [x] Implement `ValidatePath(path, mode)` in `internal/runtime/session.go`.
+- [x] **Task: Verify Path Security**
+    - [x] Unit tests for absolute paths, relative paths, and traversal attempts (`../`).
+    - [x] Ensure paths outside the whitelist are correctly identified.
+- [x] **Task: Conductor - User Manual Verification 'Phase 1: Path Security' (Protocol in workflow.md)**
 
 ## Phase 2: File Operations
 - [ ] **Task: Update ops.json**

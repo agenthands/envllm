@@ -3,6 +3,8 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/agenthands/rlm-go/internal/ast"
@@ -41,12 +43,14 @@ type SubcallResponse struct {
 
 // Policy defines the resource limits for an RLM session.
 type Policy struct {
-	MaxStmtsPerCell   int
-	MaxWallTime       time.Duration
-	MaxTotalBytes     int
-	MaxRecursionDepth int
-	MaxSubcalls       int
+	MaxStmtsPerCell     int
+	MaxWallTime         time.Duration
+	MaxTotalBytes       int
+	MaxRecursionDepth   int
+	MaxSubcalls         int
 	AllowedCapabilities map[string]bool
+	AllowedReadPaths    []string
+	AllowedWritePaths   []string
 }
 
 // Session represents an active RLM session.
@@ -92,6 +96,35 @@ func (s *Session) defineVar(name string, val Value) error {
 	}
 	s.VarsDelta[name] = val
 	return nil
+}
+
+// ValidatePath ensures a path is within the whitelist for read or write mode.
+func (s *Session) ValidatePath(path string, write bool) error {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("invalid path: %v", err)
+	}
+
+	whitelist := s.Policy.AllowedReadPaths
+	if write {
+		whitelist = s.Policy.AllowedWritePaths
+	}
+
+	for _, wp := range whitelist {
+		absWhitelist, err := filepath.Abs(wp)
+		if err != nil {
+			continue
+		}
+		if strings.HasPrefix(absPath, absWhitelist) {
+			return nil
+		}
+	}
+
+	mode := "read"
+	if write {
+		mode = "write"
+	}
+	return fmt.Errorf("security_error: %s access to %q denied by policy", mode, path)
 }
 
 func (s *Session) GenerateResult(status string, errors []Error) ExecResult {
