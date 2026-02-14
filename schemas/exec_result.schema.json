@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RLMDSL ExecResult",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "status",
+    "vars_delta",
+    "budgets",
+    "events",
+    "errors",
+    "truncated"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "status": { "type": "string", "enum": ["ok", "error", "budget_exceeded", "capability_denied"] },
+    "vars_delta": { "type": "object" },
+    "result": { "type": ["object", "null"] },
+    "final": { "type": ["object", "null"] },
+    "budgets": { "type": "object" },
+    "events": { "type": "array" },
+    "errors": { "type": "array" },
+    "truncated": { "type": "object" }
+  }
+}

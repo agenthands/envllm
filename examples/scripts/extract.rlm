@@ -1,0 +1,9 @@
+RLMDSL 0.1
+
+CELL find_data:
+  FIND_TEXT SOURCE PROMPT NEEDLE "login" MODE FIRST IGNORE_CASE true INTO login_pos
+  WINDOW_TEXT SOURCE PROMPT CENTER login_pos RADIUS 500 INTO login_snippet
+
+CELL extract:
+  SUBCALL SOURCE login_snippet TASK "Extract the login flow steps as a JSON list." DEPTH_COST 1 INTO login_json
+  SET_FINAL SOURCE login_json

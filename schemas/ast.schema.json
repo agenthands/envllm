@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RLMDSL AST",
+  "type": "object",
+  "required": [
+    "version",
+    "cells"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "cells": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "stmts"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "stmts": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  }
+}

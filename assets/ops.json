@@ -1,0 +1,195 @@
+{
+  "version": "0.1",
+  "ops": [
+    {
+      "name": "STATS",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "JSON",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "FIND_TEXT",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "INT",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "NEEDLE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "MODE",
+          "enum": [
+            "FIRST",
+            "LAST"
+          ]
+        },
+        {
+          "kw": "IGNORE_CASE",
+          "type": "BOOL"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "WINDOW_TEXT",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "TEXT",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "CENTER",
+          "type": "INT"
+        },
+        {
+          "kw": "RADIUS",
+          "type": "INT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "JSON_PARSE",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "JSON",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "JSON_GET",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "JSON",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "JSON"
+        },
+        {
+          "kw": "PATH",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "SUBCALL",
+      "capabilities": [
+        "llm"
+      ],
+      "result_type": "JSON",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "TASK",
+          "type": "TEXT"
+        },
+        {
+          "kw": "DEPTH_COST",
+          "type": "INT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "FIND_REGEX",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "SPAN",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "PATTERN",
+          "type": "TEXT"
+        },
+        {
+          "kw": "MODE",
+          "enum": [
+            "FIRST",
+            "LAST"
+          ]
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "READ_FILE",
+      "capabilities": [
+        "fs_read"
+      ],
+      "result_type": "TEXT",
+      "signature": [
+        {
+          "kw": "PATH",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "WRITE_FILE",
+      "capabilities": [
+        "fs_write"
+      ],
+      "result_type": "BOOL",
+      "signature": [
+        {
+          "kw": "PATH",
+          "type": "TEXT"
+        },
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "LIST_DIR",
+      "capabilities": [
+        "fs_read"
+      ],
+      "result_type": "JSON",
+      "signature": [
+        {
+          "kw": "PATH",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    }
+  ]
+}

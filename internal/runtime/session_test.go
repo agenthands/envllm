@@ -1,0 +1,217 @@
+package runtime
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/agenthands/rlm-go/internal/ast"
+	"github.com/agenthands/rlm-go/internal/lex"
+)
+
+// MockTextStore for testing
+type mockTextStore struct {
+	added []string
+}
+
+func (m *mockTextStore) Add(text string) TextHandle {
+	m.added = append(m.added, text)
+	return TextHandle{ID: "m1", Bytes: len(text)}
+}
+func (m *mockTextStore) Get(h TextHandle) (string, bool) { return "", false }
+func (m *mockTextStore) Window(h TextHandle, center, radius int) (TextHandle, error) {
+	return TextHandle{ID: "w1", Bytes: 10}, nil
+}
+
+func TestSession_ExecuteCell(t *testing.T) {
+	policy := Policy{
+		MaxStmtsPerCell: 10,
+		MaxWallTime:     time.Second,
+	}
+	ts := &mockTextStore{}
+	s := NewSession(policy, ts)
+
+	cell := &ast.Cell{
+		Name: "test",
+		Stmts: []ast.Stmt{
+			&ast.PrintStmt{Source: &ast.StringExpr{Value: "hello"}},
+			&ast.AssertStmt{Cond: &ast.BoolExpr{Value: true}, Message: "ok"},
+			&ast.SetFinalStmt{Source: &ast.IntExpr{Value: 42}},
+		},
+	}
+
+	err := s.ExecuteCell(context.Background(), cell)
+	if err != nil {
+		t.Fatalf("ExecuteCell failed: %v", err)
+	}
+
+	if s.Final == nil || s.Final.V != 42 {
+		t.Errorf("expected Final value 42, got %v", s.Final)
+	}
+}
+
+func TestSession_Budgets(t *testing.T) {
+	policy := Policy{
+		MaxStmtsPerCell: 1,
+	}
+	s := NewSession(policy, nil)
+
+	cell := &ast.Cell{
+		Stmts: []ast.Stmt{
+			&ast.PrintStmt{Source: &ast.IntExpr{Value: 1}},
+			&ast.PrintStmt{Source: &ast.IntExpr{Value: 2}},
+		},
+	}
+
+	err := s.ExecuteCell(context.Background(), cell)
+	if err == nil {
+		t.Errorf("expected budget error")
+	}
+}
+
+func TestSession_WallTime(t *testing.T) {
+	policy := Policy{
+		MaxWallTime: time.Nanosecond, // Extremely small limit
+	}
+	s := NewSession(policy, nil)
+
+	cell := &ast.Cell{
+		Stmts: []ast.Stmt{
+			&ast.PrintStmt{Source: &ast.IntExpr{Value: 1}},
+			&ast.PrintStmt{Source: &ast.IntExpr{Value: 2}},
+		},
+	}
+	
+	err := s.ExecuteCell(context.Background(), cell)
+	if err == nil {
+		t.Errorf("expected wall time budget error")
+	}
+}
+
+func TestSession_Errors(t *testing.T) {
+	s := NewSession(Policy{}, nil)
+
+	tests := []struct {
+		name string
+		stmt ast.Stmt
+	}{
+		{"Assert Fail", &ast.AssertStmt{Cond: &ast.BoolExpr{Value: false}, Message: "fail"}},
+		{"Assert Type", &ast.AssertStmt{Cond: &ast.IntExpr{Value: 1}}},
+		{"Undefined Op", &ast.OpStmt{OpName: "NOP"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := s.ExecuteStmt(context.Background(), tt.stmt)
+			if err == nil {
+				t.Errorf("expected error for %s", tt.name)
+			}
+		})
+	}
+}
+
+func TestSession_EvalExpr_Ident(t *testing.T) {
+	s := NewSession(Policy{}, nil)
+	s.Env.Define("x", Value{Kind: KindInt, V: 100})
+
+	val, err := s.evalExpr(&ast.IdentExpr{Name: "x"})
+	if err != nil {
+		t.Fatalf("evalExpr failed: %v", err)
+	}
+	if val.V != 100 {
+		t.Errorf("expected 100, got %v", val.V)
+	}
+
+	_, err = s.evalExpr(&ast.IdentExpr{Name: "y", Loc: lex.Loc{File: "f", Line: 1}})
+	if err == nil {
+		t.Errorf("expected error for undefined variable")
+	}
+}
+
+func TestSession_EvalExpr_Errors(t *testing.T) {
+	s := NewSession(Policy{}, nil)
+	
+	// Test raw string
+	val, _ := s.evalExpr(&ast.StringExpr{Value: "raw"})
+	if val.Kind != KindString {
+		t.Errorf("expected KindString for raw string")
+	}
+
+	// Test unknown expression type
+	type unknownExpr struct{ ast.Expr }
+	_, err := s.evalExpr(&unknownExpr{})
+	if err == nil {
+		t.Errorf("expected error for unknown expression type")
+	}
+}
+
+func TestSession_ExecuteStmt_Errors(t *testing.T) {
+	s := NewSession(Policy{}, nil)
+	
+	// Unknown statement type
+	type unknownStmt struct{ ast.Stmt }
+	err := s.ExecuteStmt(context.Background(), &unknownStmt{})
+	if err == nil {
+		t.Errorf("expected error for unknown statement type")
+	}
+	
+	// SetFinal error (undefined var)
+	err = s.ExecuteStmt(context.Background(), &ast.SetFinalStmt{Source: &ast.IdentExpr{Name: "undef"}})
+	if err == nil {
+		t.Errorf("expected error for SetFinal with undefined var")
+	}
+
+	// Print error (undefined var)
+	err = s.ExecuteStmt(context.Background(), &ast.PrintStmt{Source: &ast.IdentExpr{Name: "undef"}})
+	if err == nil {
+		t.Errorf("expected error for Print with undefined var")
+	}
+}
+
+func TestSession_ValidatePath(t *testing.T) {
+	policy := Policy{
+		AllowedReadPaths:  []string{"/tmp/rlm/read", "./local/read"},
+		AllowedWritePaths: []string{"/tmp/rlm/write"},
+	}
+	s := NewSession(policy, nil)
+
+	tests := []struct {
+		path  string
+		write bool
+		want  bool
+	}{
+		{"/tmp/rlm/read/file.txt", false, true},
+		{"/tmp/rlm/read/../read/file.txt", false, true},
+		{"/tmp/rlm/secret.txt", false, false},
+		{"/tmp/rlm/write/out.txt", true, true},
+		{"/tmp/rlm/read/out.txt", true, false},
+		{"./local/read/file.txt", false, true},
+	}
+
+	for _, tt := range tests {
+		err := s.ValidatePath(tt.path, tt.write)
+		if (err == nil) != tt.want {
+			t.Errorf("ValidatePath(%q, %v) error = %v, want success = %v", tt.path, tt.write, err, tt.want)
+		}
+	}
+}
+
+func TestSession_GenerateResult(t *testing.T) {
+	s := NewSession(Policy{MaxStmtsPerCell: 10}, nil)
+	s.defineVar("res", Value{Kind: KindInt, V: 123})
+	s.Final = &Value{Kind: KindBool, V: true}
+	
+	res := s.GenerateResult("ok", nil)
+	if res.Status != "ok" {
+		t.Errorf("expected status ok")
+	}
+	if v, ok := res.VarsDelta["res"]; !ok || v.V != 123 {
+		t.Errorf("VarsDelta missing 'res'")
+	}
+	if res.Final == nil || res.Final.V != true {
+		t.Errorf("Final value missing")
+	}
+	if b, ok := res.Budgets["stmts"]; !ok || b.Limit != 10 {
+		t.Errorf("Budgets missing 'stmts'")
+	}
+}
