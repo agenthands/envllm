@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/agenthands/rlm-go/internal/runtime"
+	"github.com/agenthands/envllm/internal/runtime"
 	"github.com/tmc/langchaingo/llms"
 )
 

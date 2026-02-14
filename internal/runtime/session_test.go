@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/agenthands/rlm-go/internal/ast"
-	"github.com/agenthands/rlm-go/internal/lex"
+	"github.com/agenthands/envllm/internal/ast"
+	"github.com/agenthands/envllm/internal/lex"
 )
 
 // MockTextStore for testing

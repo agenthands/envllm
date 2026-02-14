@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/agenthands/rlm-go/internal/ast"
-	"github.com/agenthands/rlm-go/internal/lex"
-	"github.com/agenthands/rlm-go/internal/ops"
-	"github.com/agenthands/rlm-go/internal/parse"
-	"github.com/agenthands/rlm-go/internal/runtime"
-	"github.com/agenthands/rlm-go/internal/store"
+	"github.com/agenthands/envllm/internal/ast"
+	"github.com/agenthands/envllm/internal/lex"
+	"github.com/agenthands/envllm/internal/ops"
+	"github.com/agenthands/envllm/internal/parse"
+	"github.com/agenthands/envllm/internal/runtime"
+	"github.com/agenthands/envllm/internal/store"
 )
 
 // Program represents a compiled RLM-DSL program.

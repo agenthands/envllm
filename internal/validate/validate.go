@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/agenthands/rlm-go/internal/ast"
+	"github.com/agenthands/envllm/internal/ast"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/agenthands/rlm-go/examples/bridge"
-	"github.com/agenthands/rlm-go/internal/runtime"
-	"github.com/agenthands/rlm-go/internal/store"
-	"github.com/agenthands/rlm-go/pkg/envllm"
+	"github.com/agenthands/envllm/examples/bridge"
+	"github.com/agenthands/envllm/internal/runtime"
+	"github.com/agenthands/envllm/internal/store"
+	"github.com/agenthands/envllm/pkg/envllm"
 )
 
 func main() {

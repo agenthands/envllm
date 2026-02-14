@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/agenthands/rlm-go/internal/ast"
-	"github.com/agenthands/rlm-go/internal/lex"
+	"github.com/agenthands/envllm/internal/ast"
+	"github.com/agenthands/envllm/internal/lex"
 )
 
 type Parser struct {

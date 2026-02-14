@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agenthands/rlm-go/internal/runtime"
+	"github.com/agenthands/envllm/internal/runtime"
 )
 
 func TestPublicAPI(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/agenthands/rlm-go/internal/repl"
-	"github.com/agenthands/rlm-go/internal/runtime"
-	"github.com/agenthands/rlm-go/pkg/envllm"
+	"github.com/agenthands/envllm/internal/repl"
+	"github.com/agenthands/envllm/internal/runtime"
+	"github.com/agenthands/envllm/pkg/envllm"
 )
 
 func main() {

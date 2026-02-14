@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/agenthands/rlm-go/internal/runtime"
+	"github.com/agenthands/envllm/internal/runtime"
 )
 
 // Table holds all registered operations and their signatures.
