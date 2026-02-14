@@ -9,11 +9,11 @@ This plan follows the TDD workflow: write tests first, then implement, then veri
     - [x] Write tests for basic tokenization of keywords, idents, and literals.
     - [x] Implement the lexer to pass tests.
     - [x] Verify 90% coverage for `internal/lex`.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 1: Lexer Implementation' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 1: Lexer Implementation' (Protocol in workflow.md)**
 
 ## Phase 2: Parser & AST Generation
-- [ ] **Task: Define AST Structures**
-    - [ ] Implement Go structs in `internal/ast` matching `schemas/ast.schema.json`.
+- [x] **Task: Define AST Structures**
+    - [x] Implement Go structs in `internal/ast` matching `schemas/ast.schema.json`.
 - [ ] **Task: Implement Parser**
     - [ ] Write parser tests for `CELL` blocks and `RLMDSL` header.
     - [ ] Implement the parser logic using the lexer.
