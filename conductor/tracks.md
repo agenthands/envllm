@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implement Capability Gating and Regex Operations**
+- [x] **Track: Implement Capability Gating and Regex Operations**
   *Link: [./tracks/capability_regex_20260214/](./tracks/capability_regex_20260214/)*
