@@ -22,13 +22,13 @@ This plan follows the TDD workflow: write tests first, then implement, then veri
 - [x] **Task: Verify Parser Quality**
     - [x] Verify 90% coverage for `internal/parse`.
     - [x] Run native Go fuzzing on parser entry point.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 2: Parser & AST Generation' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 2: Parser & AST Generation' (Protocol in workflow.md)**
 
 ## Phase 3: Validation & Schemas
-- [ ] **Task: Implement Schema Validation**
-    - [ ] Integrate `github.com/santhosh-tekuri/jsonschema/v5`.
-    - [ ] Write tests to validate generated ASTs against `schemas/ast.schema.json`.
-    - [ ] Implement validator service in `internal/validate`.
-- [ ] **Task: Verify Validation Quality**
-    - [ ] Verify 90% coverage for `internal/validate`.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 3: Validation & Schemas' (Protocol in workflow.md)**
+- [x] **Task: Implement Schema Validation**
+    - [x] Integrate `github.com/santhosh-tekuri/jsonschema/v5`.
+    - [x] Write tests to validate generated ASTs against `schemas/ast.schema.json`.
+    - [x] Implement validator service in `internal/validate`.
+- [x] **Task: Verify Validation Quality**
+    - [x] Verify 90% coverage for `internal/validate`.
+- [x] **Task: Conductor - User Manual Verification 'Phase 3: Validation & Schemas' (Protocol in workflow.md)**

@@ -110,7 +110,7 @@ func (p *Parser) parseStatement() (ast.Stmt, error) {
 }
 
 func (p *Parser) parseOpStatement() (*ast.OpStmt, error) {
-	stmt := &ast.OpStmt{Loc: p.curToken.Loc, OpName: p.curToken.Value}
+	stmt := &ast.OpStmt{Loc: p.curToken.Loc, OpName: p.curToken.Value, Type: "op"}
 	p.nextToken()
 
 	for p.curToken.Type == lex.TypeIdent && p.peekToken.Type != lex.TypeEOF && p.curToken.Value != "INTO" {
@@ -144,21 +144,21 @@ func (p *Parser) parseOpStatement() (*ast.OpStmt, error) {
 func (p *Parser) parseExpr() (ast.Expr, error) {
 	switch p.curToken.Type {
 	case lex.TypeIdent:
-		e := &ast.IdentExpr{Loc: p.curToken.Loc, Name: p.curToken.Value}
+		e := &ast.IdentExpr{Loc: p.curToken.Loc, Name: p.curToken.Value, Kind: "IDENT"}
 		p.nextToken()
 		return e, nil
 	case lex.TypeString:
-		e := &ast.StringExpr{Loc: p.curToken.Loc, Value: p.curToken.Value}
+		e := &ast.StringExpr{Loc: p.curToken.Loc, Value: p.curToken.Value, Kind: "STRING"}
 		p.nextToken()
 		return e, nil
 	case lex.TypeInt:
 		val, _ := strconv.Atoi(p.curToken.Value)
-		e := &ast.IntExpr{Loc: p.curToken.Loc, Value: val}
+		e := &ast.IntExpr{Loc: p.curToken.Loc, Value: val, Kind: "INT"}
 		p.nextToken()
 		return e, nil
 	case lex.TypeBool:
 		val := p.curToken.Value == "true"
-		e := &ast.BoolExpr{Loc: p.curToken.Loc, Value: val}
+		e := &ast.BoolExpr{Loc: p.curToken.Loc, Value: val, Kind: "BOOL"}
 		p.nextToken()
 		return e, nil
 	default:
@@ -167,7 +167,7 @@ func (p *Parser) parseExpr() (ast.Expr, error) {
 }
 
 func (p *Parser) parseSetFinal() (*ast.SetFinalStmt, error) {
-	stmt := &ast.SetFinalStmt{Loc: p.curToken.Loc}
+	stmt := &ast.SetFinalStmt{Loc: p.curToken.Loc, Type: "set_final"}
 	p.nextToken()
 	if p.curToken.Value != "SOURCE" {
 		return nil, fmt.Errorf("%s: expected SOURCE after SET_FINAL", p.curToken.Loc)
@@ -185,7 +185,7 @@ func (p *Parser) parseSetFinal() (*ast.SetFinalStmt, error) {
 }
 
 func (p *Parser) parseAssert() (*ast.AssertStmt, error) {
-	stmt := &ast.AssertStmt{Loc: p.curToken.Loc}
+	stmt := &ast.AssertStmt{Loc: p.curToken.Loc, Type: "assert"}
 	p.nextToken()
 	if p.curToken.Value != "COND" {
 		return nil, fmt.Errorf("%s: expected COND after ASSERT", p.curToken.Loc)
@@ -212,7 +212,7 @@ func (p *Parser) parseAssert() (*ast.AssertStmt, error) {
 }
 
 func (p *Parser) parsePrint() (*ast.PrintStmt, error) {
-	stmt := &ast.PrintStmt{Loc: p.curToken.Loc}
+	stmt := &ast.PrintStmt{Loc: p.curToken.Loc, Type: "print"}
 	p.nextToken()
 	if p.curToken.Value != "SOURCE" {
 		return nil, fmt.Errorf("%s: expected SOURCE after PRINT", p.curToken.Loc)
