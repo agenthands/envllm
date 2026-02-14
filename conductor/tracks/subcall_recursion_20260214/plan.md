@@ -1,14 +1,14 @@
 # Implementation Plan: SUBCALL & Host Interface
 
 ## Phase 1: Host Interface and Accounting
-- [ ] **Task: Define Host Interface**
-    - [ ] Add `Host` interface to `internal/runtime/session.go`.
-    - [ ] Define `SubcallRequest` and `SubcallResponse` types.
-- [ ] **Task: Implement Recursion State**
-    - [ ] Update `Session` struct with `RecursionDepth` and `SubcallCount`.
-    - [ ] Update `Policy` with `MaxRecursionDepth` and `MaxSubcalls`.
-    - [ ] Update `GenerateResult` to include recursion stats in `budgets`.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 1: Host Interface and Accounting' (Protocol in workflow.md)**
+- [x] **Task: Define Host Interface**
+    - [x] Add `Host` interface to `internal/runtime/session.go`.
+    - [x] Define `SubcallRequest` and `SubcallResponse` types.
+- [x] **Task: Implement Recursion State**
+    - [x] Update `Session` struct with `RecursionDepth` and `SubcallCount`.
+    - [x] Update `Policy` with `MaxRecursionDepth` and `MaxSubcalls`.
+    - [x] Update `GenerateResult` to include recursion stats in `budgets`.
+- [x] **Task: Conductor - User Manual Verification 'Phase 1: Host Interface and Accounting' (Protocol in workflow.md)**
 
 ## Phase 2: SUBCALL Implementation
 - [ ] **Task: Implement SUBCALL Logic**

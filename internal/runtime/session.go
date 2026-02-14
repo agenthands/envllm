@@ -20,11 +20,32 @@ type OpDispatcher interface {
 	Dispatch(s *Session, name string, args []KwArg) (Value, error)
 }
 
+// Host interface defines the interaction between the runtime and the LLM environment.
+type Host interface {
+	Subcall(ctx context.Context, req SubcallRequest) (SubcallResponse, error)
+}
+
+// SubcallRequest represents a request sent to the Host.
+type SubcallRequest struct {
+	Source    TextHandle
+	Task      string
+	DepthCost int
+	Budgets   map[string]int // Inherited/Passthrough budgets
+}
+
+// SubcallResponse represents the result returned by the Host.
+type SubcallResponse struct {
+	Result Value
+	Stats  map[string]int
+}
+
 // Policy defines the resource limits for an RLM session.
 type Policy struct {
-	MaxStmtsPerCell int
-	MaxWallTime     time.Duration
-	MaxTotalBytes   int
+	MaxStmtsPerCell   int
+	MaxWallTime       time.Duration
+	MaxTotalBytes     int
+	MaxRecursionDepth int
+	MaxSubcalls       int
 }
 
 // Session represents an active RLM session.
@@ -37,8 +58,10 @@ type Session struct {
 	Final  *Value
 	
 	// Stats for budgeting
-	StmtsExecuted int
-	StartTime     time.Time
+	StmtsExecuted  int
+	StartTime      time.Time
+	RecursionDepth int
+	SubcallCount   int
 
 	// Result tracking
 	Events    []Event
@@ -46,13 +69,17 @@ type Session struct {
 
 	// Dispatcher
 	Dispatcher OpDispatcher
+	// Host
+	Host Host
 }
 
 func NewSession(policy Policy, ts TextStore) *Session {
 	s := &Session{
-		Env:       NewEnv(),
-		Policy:    policy,
-		VarsDelta: make(map[string]Value),
+		Env:            NewEnv(),
+		Policy:         policy,
+		VarsDelta:      make(map[string]Value),
+		RecursionDepth: 0,
+		SubcallCount:   0,
 	}
 	s.Stores.Text = ts
 	return s
@@ -79,6 +106,9 @@ func (s *Session) GenerateResult(status string, errors []Error) ExecResult {
 	// Add budgets
 	res.Budgets = make(map[string]BudgetStats)
 	res.Budgets["stmts"] = BudgetStats{Used: s.StmtsExecuted, Limit: s.Policy.MaxStmtsPerCell}
+	res.Budgets["recursion_depth"] = BudgetStats{Used: s.RecursionDepth, Limit: s.Policy.MaxRecursionDepth}
+	res.Budgets["subcalls"] = BudgetStats{Used: s.SubcallCount, Limit: s.Policy.MaxSubcalls}
+	
 	if s.Policy.MaxWallTime > 0 {
 		res.Budgets["wall_time_ms"] = BudgetStats{
 			Used:  int(time.Since(s.StartTime).Milliseconds()),
