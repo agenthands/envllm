@@ -10,13 +10,13 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: LangChainGo Bridge' (Protocol in workflow.md)**
 
 ## Phase 2: RLM Examples
-- [ ] **Task: Create Example Scripts**
-    - [ ] Write `examples/scripts/summarize.rlm`.
-    - [ ] Write `examples/scripts/extract.rlm`.
-- [ ] **Task: Implement Main Example Entry Point**
-    - [ ] Create `examples/main.go` that ties the bridge and scripts together.
-    - [ ] Verify execution using a local provider (e.g., mock or local LLM).
-- [ ] **Task: Conductor - User Manual Verification 'Phase 2: RLM Examples' (Protocol in workflow.md)**
+- [x] **Task: Create Example Scripts**
+    - [x] Write `examples/scripts/summarize.rlm`.
+    - [x] Write `examples/scripts/extract.rlm`.
+- [x] **Task: Implement Main Example Entry Point**
+    - [x] Create `examples/main.go` that ties the bridge and scripts together.
+    - [x] Verify execution using a local provider (e.g., mock or local LLM).
+- [x] **Task: Conductor - User Manual Verification 'Phase 2: RLM Examples' (Protocol in workflow.md)**
 
 ## Phase 3: Comprehensive Documentation
 - [ ] **Task: Update README.md**
