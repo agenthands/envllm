@@ -9,11 +9,12 @@ import (
 type Kind string
 
 const (
-	KindInt  Kind = "INT"
-	KindBool Kind = "BOOL"
-	KindText Kind = "TEXT"
-	KindJSON Kind = "JSON"
-	KindSpan Kind = "SPAN"
+	KindInt    Kind = "INT"
+	KindBool   Kind = "BOOL"
+	KindText   Kind = "TEXT"
+	KindJSON   Kind = "JSON"
+	KindSpan   Kind = "SPAN"
+	KindString Kind = "STRING"
 )
 
 // Value represents a typed value in the RLM runtime.
@@ -34,6 +35,12 @@ type TextHandle struct {
 	Bytes        int    `json:"bytes"`
 	Preview      string `json:"preview,omitempty"`
 	PreviewBytes int    `json:"preview_bytes,omitempty"`
+}
+
+// KwArg represents a keyword-value pair in a statement.
+type KwArg struct {
+	Keyword string `json:"kw"`
+	Value   Value  `json:"value"`
 }
 
 // MarshalJSON implements custom JSON encoding for Value as required by product-guidelines.md.
@@ -83,6 +90,12 @@ func (v *Value) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		v.V = j
+	case KindString:
+		var s string
+		if err := json.Unmarshal(raw.V, &s); err != nil {
+			return err
+		}
+		v.V = s
 	case KindSpan:
 		var s Span
 		if err := json.Unmarshal(raw.V, &s); err != nil {

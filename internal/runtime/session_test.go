@@ -19,6 +19,9 @@ func (m *mockTextStore) Add(text string) TextHandle {
 	return TextHandle{ID: "m1", Bytes: len(text)}
 }
 func (m *mockTextStore) Get(h TextHandle) (string, bool) { return "", false }
+func (m *mockTextStore) Window(h TextHandle, center, radius int) (TextHandle, error) {
+	return TextHandle{ID: "w1", Bytes: 10}, nil
+}
 
 func TestSession_ExecuteCell(t *testing.T) {
 	policy := Policy{
@@ -45,9 +48,24 @@ func TestSession_ExecuteCell(t *testing.T) {
 	if s.Final == nil || s.Final.V != 42 {
 		t.Errorf("expected Final value 42, got %v", s.Final)
 	}
+}
 
-	if len(ts.added) != 1 || ts.added[0] != "hello" {
-		t.Errorf("expected 'hello' added to TextStore")
+func TestSession_Budgets(t *testing.T) {
+	policy := Policy{
+		MaxStmtsPerCell: 1,
+	}
+	s := NewSession(policy, nil)
+
+	cell := &ast.Cell{
+		Stmts: []ast.Stmt{
+			&ast.PrintStmt{Source: &ast.IntExpr{Value: 1}},
+			&ast.PrintStmt{Source: &ast.IntExpr{Value: 2}},
+		},
+	}
+
+	err := s.ExecuteCell(context.Background(), cell)
+	if err == nil {
+		t.Errorf("expected budget error")
 	}
 }
 
@@ -92,45 +110,6 @@ func TestSession_Errors(t *testing.T) {
 	}
 }
 
-func TestSession_GenerateResult(t *testing.T) {
-	s := NewSession(Policy{MaxStmtsPerCell: 10}, nil)
-	s.defineVar("res", Value{Kind: KindInt, V: 123})
-	s.Final = &Value{Kind: KindBool, V: true}
-	
-	res := s.GenerateResult("ok", nil)
-	if res.Status != "ok" {
-		t.Errorf("expected status ok")
-	}
-	if v, ok := res.VarsDelta["res"]; !ok || v.V != 123 {
-		t.Errorf("VarsDelta missing 'res'")
-	}
-	if res.Final == nil || res.Final.V != true {
-		t.Errorf("Final value missing")
-	}
-	if b, ok := res.Budgets["stmts"]; !ok || b.Limit != 10 {
-		t.Errorf("Budgets missing 'stmts'")
-	}
-}
-
-func TestSession_Budgets(t *testing.T) {
-	policy := Policy{
-		MaxStmtsPerCell: 1,
-	}
-	s := NewSession(policy, nil)
-
-	cell := &ast.Cell{
-		Stmts: []ast.Stmt{
-			&ast.PrintStmt{Source: &ast.IntExpr{Value: 1}},
-			&ast.PrintStmt{Source: &ast.IntExpr{Value: 2}},
-		},
-	}
-
-	err := s.ExecuteCell(context.Background(), cell)
-	if err == nil {
-		t.Errorf("expected budget error")
-	}
-}
-
 func TestSession_EvalExpr_Ident(t *testing.T) {
 	s := NewSession(Policy{}, nil)
 	s.Env.Define("x", Value{Kind: KindInt, V: 100})
@@ -152,10 +131,10 @@ func TestSession_EvalExpr_Ident(t *testing.T) {
 func TestSession_EvalExpr_Errors(t *testing.T) {
 	s := NewSession(Policy{}, nil)
 	
-	// Test nil TextStore for StringExpr
+	// Test raw string
 	val, _ := s.evalExpr(&ast.StringExpr{Value: "raw"})
-	if val.Kind != KindJSON {
-		t.Errorf("expected KindJSON for raw string when TextStore is nil")
+	if val.Kind != KindString {
+		t.Errorf("expected KindString for raw string")
 	}
 
 	// Test unknown expression type
@@ -186,5 +165,25 @@ func TestSession_ExecuteStmt_Errors(t *testing.T) {
 	err = s.ExecuteStmt(context.Background(), &ast.PrintStmt{Source: &ast.IdentExpr{Name: "undef"}})
 	if err == nil {
 		t.Errorf("expected error for Print with undefined var")
+	}
+}
+
+func TestSession_GenerateResult(t *testing.T) {
+	s := NewSession(Policy{MaxStmtsPerCell: 10}, nil)
+	s.defineVar("res", Value{Kind: KindInt, V: 123})
+	s.Final = &Value{Kind: KindBool, V: true}
+	
+	res := s.GenerateResult("ok", nil)
+	if res.Status != "ok" {
+		t.Errorf("expected status ok")
+	}
+	if v, ok := res.VarsDelta["res"]; !ok || v.V != 123 {
+		t.Errorf("VarsDelta missing 'res'")
+	}
+	if res.Final == nil || res.Final.V != true {
+		t.Errorf("Final value missing")
+	}
+	if b, ok := res.Budgets["stmts"]; !ok || b.Limit != 10 {
+		t.Errorf("Budgets missing 'stmts'")
 	}
 }

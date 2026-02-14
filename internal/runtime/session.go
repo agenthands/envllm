@@ -8,14 +8,16 @@ import (
 	"github.com/agenthands/rlm-go/internal/ast"
 )
 
-// TextStore interface to avoid circular dependency if needed, 
-// but since store is in internal/store, and it imports runtime, 
-// we have a circular dependency if runtime imports store.
-// Let's define the interface here.
+// TextStore interface.
 type TextStore interface {
 	Add(text string) TextHandle
 	Get(h TextHandle) (string, bool)
 	Window(h TextHandle, center, radius int) (TextHandle, error)
+}
+
+// OpDispatcher allows the runtime to execute operations defined elsewhere.
+type OpDispatcher interface {
+	Dispatch(s *Session, name string, args []KwArg) (Value, error)
 }
 
 // Policy defines the resource limits for an RLM session.
@@ -41,6 +43,9 @@ type Session struct {
 	// Result tracking
 	Events    []Event
 	VarsDelta map[string]Value
+
+	// Dispatcher
+	Dispatcher OpDispatcher
 }
 
 func NewSession(policy Policy, ts TextStore) *Session {
@@ -121,7 +126,6 @@ func (s *Session) ExecuteStmt(ctx context.Context, stmt ast.Stmt) error {
 		if err != nil {
 			return err
 		}
-		// In v0.1 we just trace it or print to stdout for now.
 		fmt.Printf("[PRINT] %v\n", val.V)
 	case *ast.AssertStmt:
 		val, err := s.evalExpr(st.Cond)
@@ -135,8 +139,39 @@ func (s *Session) ExecuteStmt(ctx context.Context, stmt ast.Stmt) error {
 			return fmt.Errorf("assertion failed: %s", st.Message)
 		}
 	case *ast.OpStmt:
-		// Basic OpStmt handling (to be expanded in next track)
-		return fmt.Errorf("operation %q not yet implemented", st.OpName)
+		if s.Dispatcher == nil {
+			return fmt.Errorf("no operation dispatcher configured")
+		}
+		
+		// Evaluate arguments
+		var args []KwArg
+		for _, arg := range st.Args {
+			val, err := s.evalExpr(arg.Value)
+			if err != nil {
+				return err
+			}
+			args = append(args, KwArg{Keyword: arg.Keyword, Value: val})
+		}
+		
+		res, err := s.Dispatcher.Dispatch(s, st.OpName, args)
+		if err != nil {
+			return err
+		}
+		
+		// Handle INTO
+		if st.Into != "" {
+			if err := s.defineVar(st.Into, res); err != nil {
+				return err
+			}
+		}
+		
+		// Record event
+		s.Events = append(s.Events, Event{
+			T:    "op",
+			Op:   st.OpName,
+			Into: st.Into,
+		})
+
 	default:
 		return fmt.Errorf("unknown statement type: %T", stmt)
 	}
@@ -153,11 +188,7 @@ func (s *Session) evalExpr(expr ast.Expr) (Value, error) {
 		}
 		return val, nil
 	case *ast.StringExpr:
-		if s.Stores.Text == nil {
-			return Value{Kind: KindJSON, V: e.Value}, nil
-		}
-		h := s.Stores.Text.Add(e.Value)
-		return Value{Kind: KindText, V: h}, nil
+		return Value{Kind: KindString, V: e.Value}, nil
 	case *ast.IntExpr:
 		return Value{Kind: KindInt, V: e.Value}, nil
 	case *ast.BoolExpr:

@@ -17,13 +17,13 @@
     - [x] Implement `JSON_PARSE` and `JSON_GET`.
     - [x] Write unit tests for valid and malformed JSON.
 - [x] **Task: Verify Ops Quality**
-    - [x] Verify 90% coverage for `internal/ops` and its sub-packages.- [ ] **Task: Conductor - User Manual Verification 'Phase 2: Pure Ops Implementation' (Protocol in workflow.md)**
+    - [x] Verify 90% coverage for `internal/ops` and its sub-packages.- [x] **Task: Conductor - User Manual Verification 'Phase 2: Pure Ops Implementation' (Protocol in workflow.md)**
 
 ## Phase 3: Runtime Integration
-- [ ] **Task: Update Session Dispatch**
-    - [ ] Integrate registry into `internal/runtime/session.go`.
-    - [ ] Implement `INTO` logic for `OpStmt`.
-- [ ] **Task: End-to-End Verification**
-    - [ ] Write an integration test executing a program that finds a string and windows it.
-    - [ ] Ensure all execution events are recorded in `ExecResult`.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 3: Runtime Integration' (Protocol in workflow.md)**
+- [x] **Task: Update Session Dispatch**
+    - [x] Integrate registry into `internal/runtime/session.go`.
+    - [x] Implement `INTO` logic for `OpStmt`.
+- [x] **Task: End-to-End Verification**
+    - [x] Write an integration test executing a program that finds a string and windows it.
+    - [x] Ensure all execution events are recorded in `ExecResult`.
+- [x] **Task: Conductor - User Manual Verification 'Phase 3: Runtime Integration' (Protocol in workflow.md)**
