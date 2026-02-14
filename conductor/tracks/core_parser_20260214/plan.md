@@ -19,9 +19,9 @@ This plan follows the TDD workflow: write tests first, then implement, then veri
     - [x] Implement the parser logic using the lexer.
     - [x] Write tests for operation statements with keywords and `INTO`.
     - [x] Implement op statement parsing.
-- [ ] **Task: Verify Parser Quality**
-    - [ ] Verify 90% coverage for `internal/parse`.
-    - [ ] Run native Go fuzzing on parser entry point.
+- [x] **Task: Verify Parser Quality**
+    - [x] Verify 90% coverage for `internal/parse`.
+    - [x] Run native Go fuzzing on parser entry point.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 2: Parser & AST Generation' (Protocol in workflow.md)**
 
 ## Phase 3: Validation & Schemas
