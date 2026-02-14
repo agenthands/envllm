@@ -3,8 +3,8 @@
 This plan follows the TDD workflow: write tests first, then implement, then verify.
 
 ## Phase 1: Lexer Implementation
-- [ ] **Task: Setup Lexer Scaffolding**
-    - [ ] Define Token types and `Loc` structure in `internal/lex`.
+- [x] **Task: Setup Lexer Scaffolding**
+    - [x] Define Token types and `Loc` structure in `internal/lex`.
 - [ ] **Task: Implement Lexer Logic**
     - [ ] Write tests for basic tokenization of keywords, idents, and literals.
     - [ ] Implement the lexer to pass tests.
