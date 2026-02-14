@@ -14,11 +14,11 @@ This plan follows the TDD workflow: write tests first, then implement, then veri
 ## Phase 2: Parser & AST Generation
 - [x] **Task: Define AST Structures**
     - [x] Implement Go structs in `internal/ast` matching `schemas/ast.schema.json`.
-- [ ] **Task: Implement Parser**
-    - [ ] Write parser tests for `CELL` blocks and `RLMDSL` header.
-    - [ ] Implement the parser logic using the lexer.
-    - [ ] Write tests for operation statements with keywords and `INTO`.
-    - [ ] Implement op statement parsing.
+- [x] **Task: Implement Parser**
+    - [x] Write parser tests for `CELL` blocks and `RLMDSL` header.
+    - [x] Implement the parser logic using the lexer.
+    - [x] Write tests for operation statements with keywords and `INTO`.
+    - [x] Implement op statement parsing.
 - [ ] **Task: Verify Parser Quality**
     - [ ] Verify 90% coverage for `internal/parse`.
     - [ ] Run native Go fuzzing on parser entry point.

@@ -133,6 +133,16 @@ func lookupIdent(ident string) Type {
 	case "true", "false":
 		return TypeBool
 	default:
+		allDigits := true
+		for _, r := range ident {
+			if !unicode.IsDigit(r) {
+				allDigits = false
+				break
+			}
+		}
+		if allDigits && len(ident) > 0 {
+			return TypeInt
+		}
 		return TypeIdent
 	}
 }
