@@ -8,12 +8,12 @@
     - [x] Implement `TextStore` in `internal/store`.
     - [x] Write tests for handle-based access and snippet creation.
     - [x] Verify 90% coverage for `internal/store`.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 1: Values and TextStore' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 1: Values and TextStore' (Protocol in workflow.md)**
 
 ## Phase 2: Session and Environment
-- [ ] **Task: Implement Environment**
-    - [ ] Implement `Env` for variable storage and single-assignment enforcement.
-    - [ ] Write tests for variable scope and reassignment errors.
+- [x] **Task: Implement Environment**
+    - [x] Implement `Env` for variable storage and single-assignment enforcement.
+    - [x] Write tests for variable scope and reassignment errors.
 - [ ] **Task: Implement Session & Interpreter**
     - [ ] Implement `Session` and the `Step()` loop in `internal/runtime`.
     - [ ] Implement `SET_FINAL`, `PRINT`, and `ASSERT` logic.
