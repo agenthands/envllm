@@ -46,6 +46,7 @@ type Policy struct {
 	MaxTotalBytes     int
 	MaxRecursionDepth int
 	MaxSubcalls       int
+	AllowedCapabilities map[string]bool
 }
 
 // Session represents an active RLM session.

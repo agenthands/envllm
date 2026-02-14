@@ -1,13 +1,13 @@
 # Implementation Plan: Capability Gating & Regex
 
 ## Phase 1: Capability Enforcement
-- [ ] **Task: Update Policy and Dispatcher**
-    - [ ] Add `AllowedCapabilities map[string]bool` to `runtime.Policy`.
-    - [ ] Update `ops.Registry.Dispatch` to check `Op.Capabilities` against the policy.
-- [ ] **Task: Verify Gating**
-    - [ ] Write unit tests for denied capabilities (e.g., calling `SUBCALL` without "llm" access).
-    - [ ] Ensure the error status is `capability_denied`.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 1: Capability Enforcement' (Protocol in workflow.md)**
+- [x] **Task: Update Policy and Dispatcher**
+    - [x] Add `AllowedCapabilities map[string]bool` to `runtime.Policy`.
+    - [x] Update `ops.Registry.Dispatch` to check `Op.Capabilities` against the policy.
+- [x] **Task: Verify Gating**
+    - [x] Write unit tests for denied capabilities (e.g., calling `SUBCALL` without "llm" access).
+    - [x] Ensure the error status is `capability_denied`.
+- [x] **Task: Conductor - User Manual Verification 'Phase 1: Capability Enforcement' (Protocol in workflow.md)**
 
 ## Phase 2: Regex Operations
 - [ ] **Task: Update ops.json**

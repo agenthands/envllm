@@ -117,7 +117,17 @@ func (r *Registry) Dispatch(s *runtime.Session, name string, args []runtime.KwAr
 		return runtime.Value{}, err
 	}
 
-	// 2. Lookup implementation
+	// 2. Check capabilities
+	for _, cap := range op.Capabilities {
+		if cap == "pure" {
+			continue
+		}
+		if s.Policy.AllowedCapabilities == nil || !s.Policy.AllowedCapabilities[cap] {
+			return runtime.Value{}, fmt.Errorf("capability %q denied by policy", cap)
+		}
+	}
+
+	// 3. Lookup implementation
 	impl, ok := r.impls[name]
 	if !ok {
 		return runtime.Value{}, fmt.Errorf("operation %q has no implementation", name)

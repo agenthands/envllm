@@ -40,7 +40,11 @@ func TestSubcall(t *testing.T) {
 	tbl, _ := LoadTable("../../assets/ops.json")
 	reg := NewRegistry(tbl)
 	ts := &mockTextStore{content: make(map[string]string)}
-	s := runtime.NewSession(runtime.Policy{MaxSubcalls: 2, MaxRecursionDepth: 10}, ts)
+	s := runtime.NewSession(runtime.Policy{
+		MaxSubcalls: 2, 
+		MaxRecursionDepth: 10,
+		AllowedCapabilities: map[string]bool{"llm": true},
+	}, ts)
 	
 	host := &mockHost{
 		subcallFunc: func(req runtime.SubcallRequest) (runtime.SubcallResponse, error) {
@@ -79,7 +83,11 @@ func TestSubcall_BudgetExceeded(t *testing.T) {
 	tbl, _ := LoadTable("../../assets/ops.json")
 	reg := NewRegistry(tbl)
 	ts := &mockTextStore{content: make(map[string]string)}
-	s := runtime.NewSession(runtime.Policy{MaxSubcalls: 1, MaxRecursionDepth: 5}, ts)
+	s := runtime.NewSession(runtime.Policy{
+		MaxSubcalls: 1, 
+		MaxRecursionDepth: 5,
+		AllowedCapabilities: map[string]bool{"llm": true},
+	}, ts)
 	s.Host = &mockHost{}
 
 	taskHandle := ts.Add("test")
@@ -105,7 +113,11 @@ func TestSubcall_BudgetExceeded(t *testing.T) {
 	}
 
 	// Test RecursionDepth exceeded
-	s2 := runtime.NewSession(runtime.Policy{MaxSubcalls: 10, MaxRecursionDepth: 5}, ts)
+	s2 := runtime.NewSession(runtime.Policy{
+		MaxSubcalls: 10, 
+		MaxRecursionDepth: 5,
+		AllowedCapabilities: map[string]bool{"llm": true},
+	}, ts)
 	s2.Host = &mockHost{}
 	args2 := []runtime.KwArg{
 		{Keyword: "SOURCE", Value: runtime.Value{Kind: runtime.KindText, V: runtime.TextHandle{ID: "t1"}}},
@@ -115,6 +127,40 @@ func TestSubcall_BudgetExceeded(t *testing.T) {
 	_, err = reg.Dispatch(s2, "SUBCALL", args2)
 	if err == nil {
 		t.Errorf("expected error for MaxRecursionDepth exceeded")
+	}
+}
+
+func TestCapabilityGating(t *testing.T) {
+	tbl, _ := LoadTable("../../assets/ops.json")
+	reg := NewRegistry(tbl)
+	ts := &mockTextStore{content: make(map[string]string)}
+	
+	// Policy without 'llm' capability
+	s := runtime.NewSession(runtime.Policy{
+		AllowedCapabilities: map[string]bool{},
+	}, ts)
+	s.Host = &mockHost{}
+
+	taskHandle := ts.Add("test")
+	args := []runtime.KwArg{
+		{Keyword: "SOURCE", Value: runtime.Value{Kind: runtime.KindText, V: runtime.TextHandle{ID: "t1"}}},
+		{Keyword: "TASK", Value: runtime.Value{Kind: runtime.KindText, V: taskHandle}},
+		{Keyword: "DEPTH_COST", Value: runtime.Value{Kind: runtime.KindInt, V: 1}},
+	}
+
+	_, err := reg.Dispatch(s, "SUBCALL", args)
+	if err == nil || !strings.Contains(err.Error(), "denied by policy") {
+		t.Errorf("expected capability denied error, got %v", err)
+	}
+
+	// Policy with 'llm' capability
+	s.Policy.AllowedCapabilities["llm"] = true
+	s.Host.(*mockHost).subcallFunc = func(req runtime.SubcallRequest) (runtime.SubcallResponse, error) {
+		return runtime.SubcallResponse{Result: runtime.Value{Kind: runtime.KindJSON, V: map[string]interface{}{}}}, nil
+	}
+	_, err = reg.Dispatch(s, "SUBCALL", args)
+	if err != nil {
+		t.Errorf("expected success with 'llm' capability, got %v", err)
 	}
 }
 
