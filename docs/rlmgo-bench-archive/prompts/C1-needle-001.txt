@@ -1,0 +1,8 @@
+
+System Manual
+
+...
+Credentials Block:
+user: admin
+pass: hunter2
+...

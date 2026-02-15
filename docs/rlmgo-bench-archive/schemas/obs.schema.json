@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "cell",
+    "status",
+    "vars_delta",
+    "budgets",
+    "events",
+    "errors",
+    "truncated"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "cell": {
+      "type": "object",
+      "required": [
+        "name",
+        "index"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        }
+      }
+    },
+    "status": {
+      "type": "string"
+    },
+    "vars_delta": {
+      "type": "object"
+    },
+    "result": {},
+    "final": {},
+    "budgets": {
+      "type": "object"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "truncated": {
+      "type": "object"
+    }
+  }
+}

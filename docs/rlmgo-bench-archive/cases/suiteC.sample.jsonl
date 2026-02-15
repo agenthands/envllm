@@ -1,0 +1,17 @@
+{
+"id":"C1-needle-001",
+"suite":"C",
+"family":"C1",
+"prompt_ref":"prompts/C1-needle-001.txt",
+"task":"Extract credentials JSON",
+"expected_ref":"expected/C1-needle-001.json",
+"expected_schema_ref":"schemas/case_output.schema.json",
+"policy":{
+  "max_cells":10,
+  "max_subcalls":5,
+  "max_recursion_depth":3,
+  "max_obs_bytes":8000
+},
+"driver":{"temperature":0.0},
+"scoring":{"mode":"json_semantic"}
+}
