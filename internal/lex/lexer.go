@@ -73,7 +73,7 @@ func (l *Lexer) NextToken() Token {
 		tok.Type = TypeEOF
 		tok.Value = ""
 	default:
-		if isLetter(l.ch) || unicode.IsDigit(l.ch) {
+		if isLetter(l.ch) || unicode.IsDigit(l.ch) || l.ch == '-' {
 			tok.Value = l.readIdentifier()
 			tok.Type = lookupIdent(tok.Value)
 			return tok
@@ -89,13 +89,31 @@ func (l *Lexer) NextToken() Token {
 
 func (l *Lexer) readString() string {
 	l.readChar() // skip "
-	pos := l.pos
+	var s []rune
 	for l.ch != '"' && l.ch != 0 {
+		if l.ch == '\\' {
+			l.readChar()
+			switch l.ch {
+			case 'n':
+				s = append(s, '\n')
+			case 't':
+				s = append(s, '\t')
+			case 'r':
+				s = append(s, '\r')
+			case '"':
+				s = append(s, '"')
+			case '\\':
+				s = append(s, '\\')
+			default:
+				s = append(s, '\\', l.ch)
+			}
+		} else {
+			s = append(s, l.ch)
+		}
 		l.readChar()
 	}
-	s := l.input[pos:l.pos]
 	l.readChar() // skip "
-	return s
+	return string(s)
 }
 
 func (l *Lexer) skipWhitespace() {
@@ -132,12 +150,22 @@ func lookupIdent(ident string) Type {
 		return TypePRINT
 	case "true", "false":
 		return TypeBool
+	case "null":
+		return TypeNull
 	default:
 		allDigits := true
-		for _, r := range ident {
-			if !unicode.IsDigit(r) {
-				allDigits = false
-				break
+		start := 0
+		if len(ident) > 0 && ident[0] == '-' {
+			start = 1
+		}
+		if len(ident) == start {
+			allDigits = false
+		} else {
+			for i := start; i < len(ident); i++ {
+				if !unicode.IsDigit(rune(ident[i])) {
+					allDigits = false
+					break
+				}
 			}
 		}
 		if allDigits && len(ident) > 0 {

@@ -1,11 +1,13 @@
-# RLM-DSL Dialect Card (prepend to the LLM)
-Output ONLY valid RLMDSL 0.1 code.
+# EnvLLM-DSL Dialect Card (prepend to the LLM)
+Output ONLY valid EnvLLM-DSL 0.1 code.
 
 Rules:
 - Use CELL blocks.
 - Every OP line ends with INTO <var>.
 - Keyword order must match ops.json.
 - Never reuse a variable name.
+- Literals: "string", 123, true, false, null.
+- Indentation: exactly 2 spaces per statement.
 
 Ops:
 - STATS SOURCE <TEXT> INTO <JSON>

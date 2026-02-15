@@ -101,6 +101,15 @@ type BoolExpr struct {
 func (e *BoolExpr) Pos() lex.Loc { return e.Loc }
 func (e *BoolExpr) exprNode()   {}
 
+// NullExpr represents a null literal.
+type NullExpr struct {
+	Loc  lex.Loc `json:"-"`
+	Kind string  `json:"kind"` // "NULL"
+}
+
+func (e *NullExpr) Pos() lex.Loc { return e.Loc }
+func (e *NullExpr) exprNode()   {}
+
 // SetFinalStmt represents the SET_FINAL command.
 type SetFinalStmt struct {
 	Loc    lex.Loc `json:"-"`

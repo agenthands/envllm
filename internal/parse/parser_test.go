@@ -88,6 +88,8 @@ func TestParser_Errors(t *testing.T) {
 		{"Assert missing string", "CELL plan:\n ASSERT COND true MESSAGE 123\n"},
 		{"Print missing SOURCE", "CELL plan:\n PRINT x\n"},
 		{"Invalid expression", "CELL plan:\n PRINT SOURCE @\n"},
+		{"Invalid indentation", "CELL plan:\nPRINT SOURCE x\n"},
+		{"Too much indentation", "CELL plan:\n   PRINT SOURCE x\n"},
 	}
 
 	for _, tt := range tests {

@@ -22,6 +22,7 @@ const (
 	TypeString
 	TypeInt
 	TypeBool
+	TypeNull
 	TypeJSON
 
 	// Symbols

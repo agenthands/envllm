@@ -84,6 +84,12 @@ func (p *Parser) parseCell() (*ast.Cell, error) {
 			p.nextToken()
 			continue
 		}
+		
+		// Enforce strict 2-space indentation as per EBNF
+		if p.curToken.Loc.Col != 3 {
+			return nil, fmt.Errorf("%s: expected exactly 2 spaces of indentation for statement", p.curToken.Loc)
+		}
+
 		stmt, err := p.parseStatement()
 		if err != nil {
 			return nil, err
@@ -159,6 +165,10 @@ func (p *Parser) parseExpr() (ast.Expr, error) {
 	case lex.TypeBool:
 		val := p.curToken.Value == "true"
 		e := &ast.BoolExpr{Loc: p.curToken.Loc, Value: val, Kind: "BOOL"}
+		p.nextToken()
+		return e, nil
+	case lex.TypeNull:
+		e := &ast.NullExpr{Loc: p.curToken.Loc, Kind: "NULL"}
 		p.nextToken()
 		return e, nil
 	default:

@@ -16,6 +16,7 @@ const (
 	KindSpan   Kind = "SPAN"
 	KindString Kind = "STRING"
 	KindList   Kind = "LIST"
+	KindNull   Kind = "NULL"
 )
 
 // Value represents a typed value in the RLM runtime.
@@ -109,6 +110,8 @@ func (v *Value) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		v.V = l
+	case KindNull:
+		v.V = nil
 	default:
 		return fmt.Errorf("unknown value kind: %s", v.Kind)
 	}

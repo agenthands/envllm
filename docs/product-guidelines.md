@@ -1,8 +1,8 @@
 # product-guidelines.md
 
-## Product Guidelines: EnvLM
+## Product Guidelines: EnvLLM
 
-These guidelines ensure EnvLM remains aligned with:
+These guidelines ensure EnvLLM remains aligned with:
 
 * **Recursive Language Models (RLM):** long prompt treated as an external environment, with the model interacting via a REPL and recursive calls over snippets ([arXiv][1])
 * **Anka-inspired reliability design:** constrained, explicit, canonical syntax to reduce LLM generation errors ([arXiv][2])
@@ -11,7 +11,7 @@ These guidelines ensure EnvLM remains aligned with:
 
 ## 1) LLM Interaction Principles
 
-EnvLM is a **machine-to-machine interface**: the LLM is a controller; the host is a deterministic execution environment for **pure ops** plus a budgeted `SUBCALL`.
+EnvLLM is a **machine-to-machine interface**: the LLM is a controller; the host is a deterministic execution environment for **pure ops** plus a budgeted `SUBCALL`.
 
 ### 1.1 Observation Format (Host → LLM)
 
@@ -127,8 +127,9 @@ No stack traces in observations; stack traces go to host logs only.
 
 ### 1.2 DSL Emission (LLM → Host)
 
-* The LLM MUST emit valid **RLM-DSL 0.1** only (no markdown fences unless explicitly required by the host protocol).
+* The LLM MUST emit valid **EnvLLM-DSL 0.1** only.
 * Style MUST follow Anka-like constraints: **explicit intermediates**, **verbose keywords**, **single canonical form per op** ([arXiv][2])
+* **Strict Indentation:** Every statement inside a `CELL` MUST be indented by exactly 2 spaces.
 * Reassignment is forbidden unless `Policy.AllowReassign=true` (default false).
 
 ---

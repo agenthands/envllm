@@ -266,6 +266,8 @@ func (s *Session) evalExpr(expr ast.Expr) (Value, error) {
 		return Value{Kind: KindInt, V: e.Value}, nil
 	case *ast.BoolExpr:
 		return Value{Kind: KindBool, V: e.Value}, nil
+	case *ast.NullExpr:
+		return Value{Kind: KindNull, V: nil}, nil
 	default:
 		return Value{}, fmt.Errorf("unknown expression type: %T", expr)
 	}
