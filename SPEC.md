@@ -151,21 +151,110 @@ type Policy struct {
 
 ---
 
-# 5. EBNF (complete v0.1)
+# 5. EBNF (Complete v0.1)
+This grammar is intentionally strict and canonical (Anka-style) to ensure reliable LLM code generation.
+
 ```ebnf
-program      = header? { cell } ;
-header       = "RLMDSL" version NL ;
+(* =========================
+   EnvLLM-DSL 0.1 — Full EBNF
+   ========================= *)
 
-cell         = "CELL" ident ":" NL { stmt } ;
+program         = ws, [header], ws, { cell, ws }, EOF ;
 
-stmt         = op_stmt NL | set_final NL | assert_stmt NL | print_stmt NL ;
+header          = "RLMDSL", req_ws, version, line_end ;
+version         = "0.1" ;
 
-op_stmt      = op_name { kw_arg } "INTO" ident ;
-kw_arg       = UIDENT expr ;
+cell            = "CELL", req_ws, ident, ":", line_end,
+                  { stmt_line } ;
 
-set_final    = "SET_FINAL" "SOURCE" expr ;
-assert_stmt  = "ASSERT" "COND" expr "MESSAGE" string ;
-print_stmt   = "PRINT" "SOURCE" expr ;
+stmt_line       = indent, stmt, line_end ;
 
-expr         = ident | string | int | bool ;
+stmt            = op_stmt
+                | set_final
+                | assert_stmt
+                | print_stmt
+                | empty_stmt ;
+
+empty_stmt      = (* empty line is allowed inside CELL *) ;
+
+(* ---------- Statements ---------- *)
+
+op_stmt         = op_name, { req_ws, kw_arg }, req_ws, "INTO", req_ws, ident ;
+
+kw_arg          = kw_name, req_ws, expr ;
+
+set_final       = "SET_FINAL", req_ws, "SOURCE", req_ws, expr ;
+
+assert_stmt     = "ASSERT", req_ws, "COND", req_ws, expr,
+                  req_ws, "MESSAGE", req_ws, string ;
+
+print_stmt      = "PRINT", req_ws, "SOURCE", req_ws, expr ;
+
+(* ---------- Expressions ---------- *)
+
+expr            = literal
+                | ident ;
+
+literal         = string
+                | int
+                | bool
+                | "null" ;
+
+(* ---------- Lexical elements ---------- *)
+
+op_name         = UIDENT ;
+kw_name         = UIDENT ;
+
+ident           = IDENT ;
+
+UIDENT          = UPPER, { UPPER | DIGIT | "_" } ;
+IDENT           = ( LETTER | "_" ), { LETTER | DIGIT | "_" } ;
+
+(* ---------- Literals ---------- *)
+
+int             = [ "-" ], ( "0" | ( NONZERO, { DIGIT } ) ) ;
+
+bool            = "true" | "false" ;
+
+string          = DQUOTE, { str_char }, DQUOTE ;
+
+str_char        = unescaped_char | escape_seq ;
+
+unescaped_char  = ? any Unicode scalar value except DQUOTE and backslash and line breaks ? ;
+
+escape_seq      = "\\\\"
+                | "\\\""
+                | "\\n"
+                | "\\r"
+                | "\\t"
+                | "\\u", hex, hex, hex, hex ;
+
+hex             = DIGIT | "a" | "b" | "c" | "d" | "e" | "f"
+                        | "A" | "B" | "C" | "D" | "E" | "F" ;
+
+(* ---------- Whitespace / layout ---------- *)
+
+indent          = "  " ;
+
+req_ws          = ( " " | "\t" ), { " " | "\t" } ;
+ws              = { " " | "\t" | line_end } ;
+
+line_end        = "\r\n" | "\n" ;
+
+EOF             = ? end of input ? ;
+
+(* ---------- Character classes ---------- *)
+
+UPPER           = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+                | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+                | "U" | "V" | "W" | "X" | "Y" | "Z" ;
+
+LETTER          = UPPER
+                | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+                | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+                | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+DIGIT           = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+NONZERO         = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 ```
