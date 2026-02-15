@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/agenthands/rlm-go/internal/runtime"
+	"github.com/agenthands/envllm/internal/runtime"
 )
 
 // ReadFile implements the READ_FILE operation.

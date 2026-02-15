@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agenthands/rlm-go/internal/ast"
+	"github.com/agenthands/envllm/internal/ast"
 )
 
 // TextStore interface.

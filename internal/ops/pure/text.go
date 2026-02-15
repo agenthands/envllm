@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/agenthands/rlm-go/internal/runtime"
+	"github.com/agenthands/envllm/internal/runtime"
 )
 
 // Stats implements the STATS operation.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/agenthands/rlm-go/internal/runtime"
+	"github.com/agenthands/envllm/internal/runtime"
 )
 
 // JSONParse implements the JSON_PARSE operation.

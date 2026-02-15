@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/agenthands/rlm-go/internal/ops/capability"
-	"github.com/agenthands/rlm-go/internal/ops/pure"
-	"github.com/agenthands/rlm-go/internal/runtime"
+	"github.com/agenthands/envllm/internal/ops/capability"
+	"github.com/agenthands/envllm/internal/ops/pure"
+	"github.com/agenthands/envllm/internal/runtime"
 )
 
 // OpImplementation is the function signature for operation logic.

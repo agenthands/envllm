@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/agenthands/rlm-go/internal/ast"
+	"github.com/agenthands/envllm/internal/ast"
 )
 
 func FuzzSession(f *testing.F) {

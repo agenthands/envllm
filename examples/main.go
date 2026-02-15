@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/agenthands/rlm-go/examples/bridge"
-	"github.com/agenthands/rlm-go/internal/runtime"
-	"github.com/agenthands/rlm-go/internal/store"
-	"github.com/agenthands/rlm-go/pkg/rlmgo"
+	"github.com/agenthands/envllm/examples/bridge"
+	"github.com/agenthands/envllm/internal/runtime"
+	"github.com/agenthands/envllm/internal/store"
+	"github.com/agenthands/envllm/pkg/envllm"
 )
 
 func main() {
@@ -35,14 +35,13 @@ Finally, click "Submit".`
 	// 3. Compile and Execute script
 	scriptPath := "examples/scripts/extract.rlm"
 	src, _ := os.ReadFile(scriptPath)
-	prog, err := rlmgo.Compile(scriptPath, string(src))
+	prog, err := envllm.Compile(scriptPath, string(src))
 	if err != nil {
-		fmt.Printf("Compile failed: %v
-", err)
+		fmt.Printf("Compile failed: %v\n", err)
 		return
 	}
 
-	opt := rlmgo.ExecOptions{
+	opt := envllm.ExecOptions{
 		Host:   host,
 		Policy: runtime.Policy{MaxStmtsPerCell: 50, MaxSubcalls: 5},
 		Inputs: map[string]runtime.Value{
@@ -50,8 +49,7 @@ Finally, click "Submit".`
 		},
 	}
 
-	fmt.Printf("Executing %s...
-", scriptPath)
+	fmt.Printf("Executing %s...\n", scriptPath)
 	// Note: This will fail currently because host.Model is nil.
 	// This main file serves as documentation of how to use the bridge.
 	_ = prog

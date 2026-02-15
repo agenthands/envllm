@@ -2,7 +2,7 @@ package parse
 
 import (
 	"testing"
-	"github.com/agenthands/rlm-go/internal/lex"
+	"github.com/agenthands/envllm/internal/lex"
 )
 
 func FuzzParser(f *testing.F) {

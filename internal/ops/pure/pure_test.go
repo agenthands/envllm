@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/agenthands/rlm-go/internal/runtime"
+	"github.com/agenthands/envllm/internal/runtime"
 )
 
 type mockTextStore struct {

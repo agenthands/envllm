@@ -10,7 +10,7 @@
 
 ## Installation
 ```bash
-go get github.com/agenthands/rlm-go
+go get github.com/agenthands/envllm
 ```
 
 ## CLI Usage

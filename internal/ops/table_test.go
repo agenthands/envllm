@@ -2,7 +2,7 @@ package ops
 
 import (
 	"testing"
-	"github.com/agenthands/rlm-go/internal/runtime"
+	"github.com/agenthands/envllm/internal/runtime"
 )
 
 func TestLoadTable(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/agenthands/rlm-go/internal/runtime"
+	"github.com/agenthands/envllm/internal/runtime"
 )
 
 type mockHost struct {

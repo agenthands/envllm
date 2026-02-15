@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/agenthands/rlm-go/internal/runtime"
+	"github.com/agenthands/envllm/internal/runtime"
 	"github.com/tmc/langchaingo/llms"
 )
 
@@ -18,10 +18,10 @@ type LangChainHost struct {
 func (h *LangChainHost) Subcall(ctx context.Context, req runtime.SubcallRequest) (runtime.SubcallResponse, error) {
 	// 1. Prepare prompt for LLM
 	// In a real implementation, we would prepend the 'dialect_card.md' and instructions.
-	prompt := fmt.Sprintf("Task: %s
+	prompt := fmt.Sprintf(`Task: %s
 Source Content: %s
 
-Output only valid RLMDSL code.", req.Task, h.resolveHandle(req.Source))
+Output only valid RLMDSL code.`, req.Task, h.resolveHandle(req.Source))
 
 	// 2. Call LLM
 	completion, err := llms.GenerateFromSinglePrompt(ctx, h.Model, prompt)

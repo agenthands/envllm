@@ -2,9 +2,9 @@ package validate
 
 import (
 	"testing"
-	"github.com/agenthands/rlm-go/internal/ast"
-	"github.com/agenthands/rlm-go/internal/lex"
-	"github.com/agenthands/rlm-go/internal/parse"
+	"github.com/agenthands/envllm/internal/ast"
+	"github.com/agenthands/envllm/internal/lex"
+	"github.com/agenthands/envllm/internal/parse"
 )
 
 func TestValidator(t *testing.T) {
