@@ -67,3 +67,16 @@ func TestLoc_String(t *testing.T) {
 		t.Errorf("expected %q, got %q", expected, loc.String())
 	}
 }
+
+func TestLexer_EOFIdent(t *testing.T) {
+	input := "error_id error_snippet error_pos"
+	l := NewLexer("test.rlm", input)
+	
+	expected := []string{"error_id", "error_snippet", "error_pos"}
+	for _, exp := range expected {
+		tok := l.NextToken()
+		if tok.Value != exp {
+			t.Errorf("expected %q, got %q", exp, tok.Value)
+		}
+	}
+}

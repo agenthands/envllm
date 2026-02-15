@@ -2,40 +2,76 @@ package bridge
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 
+	"github.com/agenthands/envllm/internal/ops"
 	"github.com/agenthands/envllm/internal/runtime"
+	"github.com/agenthands/envllm/pkg/envllm"
 	"github.com/tmc/langchaingo/llms"
 )
 
 // LangChainHost implements runtime.Host using LangChainGo.
 type LangChainHost struct {
-	Model llms.Model
-	Store runtime.TextStore
+	Model       llms.Model
+	Store       runtime.TextStore
+	DialectCard string
+}
+
+func NewLangChainHost(model llms.Model, store runtime.TextStore) *LangChainHost {
+	return &LangChainHost{
+		Model: model,
+		Store: store,
+	}
 }
 
 // Subcall implements the recursive call logic.
 func (h *LangChainHost) Subcall(ctx context.Context, req runtime.SubcallRequest) (runtime.SubcallResponse, error) {
-	// 1. Prepare prompt for LLM
-	// In a real implementation, we would prepend the 'dialect_card.md' and instructions.
-	prompt := fmt.Sprintf(`Task: %s
-Source Content: %s
+	prompt := fmt.Sprintf(`%s
 
-Output only valid RLMDSL code.`, req.Task, h.resolveHandle(req.Source))
+TASK: %s
+CONTEXT: %s
 
-	// 2. Call LLM
+You are in a recursive SUBCALL. 
+Produce a single CELL that solves this specific task and ends with SET_FINAL SOURCE <result>.
+Use ONLY valid EnvLLM-DSL 0.1.
+`, h.DialectCard, req.Task, h.resolveHandle(req.Source))
+
 	completion, err := llms.GenerateFromSinglePrompt(ctx, h.Model, prompt)
 	if err != nil {
 		return runtime.SubcallResponse{}, err
 	}
 
-	// 3. In a real RLM recursive call, we would execute the returned DSL.
-	// For this bridge example, we'll assume the LLM returned a JSON result directly 
-	// or we would spin up a nested Session. 
-	// To keep it simple for the example, we'll return the completion as a JSON value.
+	dslCode := h.stripMarkdown(completion)
 	
+	// Execute the returned DSL in a nested session
+	ts := envllm.NewTextStore()
+	ph := ts.Add(h.resolveHandle(req.Source))
+	
+	prog, err := envllm.Compile("subcall.rlm", dslCode)
+	if err != nil {
+		return runtime.SubcallResponse{}, fmt.Errorf("subcall DSL compilation failed: %v\nCode:\n%s", err, dslCode)
+	}
+
+	opt := envllm.ExecOptions{
+		Policy:    runtime.Policy{MaxStmtsPerCell: 50},
+		TextStore: ts,
+		Host:      h,
+		Inputs:    map[string]runtime.Value{"PROMPT": {Kind: runtime.KindText, V: ph}},
+	}
+
+	res, err := prog.Execute(ctx, opt)
+	if err != nil {
+		return runtime.SubcallResponse{}, err
+	}
+
+	if res.Final == nil {
+		return runtime.SubcallResponse{}, fmt.Errorf("subcall did not produce a final result")
+	}
+
 	return runtime.SubcallResponse{
-		Result: runtime.Value{Kind: runtime.KindJSON, V: completion},
+		Result: *res.Final,
 	}, nil
 }
 
@@ -47,9 +83,111 @@ func (h *LangChainHost) resolveHandle(handle runtime.TextHandle) string {
 	return text
 }
 
-// RunRLMLoop runs the iterative REPL-like loop for a given initial prompt.
-func (h *LangChainHost) RunRLMLoop(ctx context.Context, session *runtime.Session, initialCell string) error {
-	// Implementation of the iterative loop where the LLM writes cells and the host executes them.
-	// This is the core 'REPL' part of the RLM paper.
-	return nil // Placeholder for example
+func (h *LangChainHost) RunSession(ctx context.Context, task string, ph runtime.TextHandle, policy runtime.Policy) (runtime.ExecResult, error) {
+	s := runtime.NewSession(policy, h.Store)
+	s.Host = h
+
+	// Setup dispatcher
+	tbl, err := ops.LoadTable("../../assets/ops.json")
+	if err != nil {
+		tbl, _ = ops.LoadTable("assets/ops.json")
+	}
+	s.Dispatcher = ops.NewRegistry(tbl)
+	
+	// Set initial prompt
+	if err := s.Env.Define("PROMPT", runtime.Value{Kind: runtime.KindText, V: ph}); err != nil {
+		return runtime.ExecResult{}, err
+	}
+
+	for i := 0; i < 5; i++ {
+		obs := s.GenerateResult("ok", nil)
+		if s.Final != nil {
+			return obs, nil
+		}
+
+		obsJSON, _ := json.MarshalIndent(obs, "", "  ")
+
+		prompt := FormatPrompt(h.DialectCard, task, string(obsJSON))
+
+		completion, err := llms.GenerateFromSinglePrompt(ctx, h.Model, prompt)
+		if err != nil {
+			return obs, err
+		}
+
+		dslCode := h.stripMarkdown(completion)
+		dslCode = h.cleanDSL(dslCode)
+		fmt.Printf("--- Turn %d LLM Output ---\n%s\n------------------------\n", i, dslCode)
+
+		prog, err := envllm.Compile(fmt.Sprintf("turn_%d.rlm", i), dslCode)
+		if err != nil {
+			return obs, fmt.Errorf("turn %d: DSL compilation failed: %v\nCode:\n%s", i, err, dslCode)
+		}
+
+		for _, cell := range prog.AST.Cells {
+			if err := s.ExecuteCell(ctx, cell); err != nil {
+				return s.GenerateResult("error", []runtime.Error{{Code: "EXEC_ERROR", Message: err.Error()}}), nil
+			}
+		}
+	}
+
+	return s.GenerateResult("error", []runtime.Error{{Code: "TIMEOUT", Message: "Max turns reached"}}), nil
+}
+
+func (h *LangChainHost) cleanDSL(s string) string {
+	lines := strings.Split(s, "\n")
+	var cleaned []string
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "NEXT CELL:" || trimmed == "CELL_END" || trimmed == "RLMDSL 0.1" {
+			continue
+		}
+		cleaned = append(cleaned, line)
+	}
+	return strings.Join(cleaned, "\n")
+}
+
+func (h *LangChainHost) stripMarkdown(s string) string {
+	s = strings.TrimSpace(s)
+	if strings.Contains(s, "```") {
+		// Find first occurrence of ``` and last occurrence of ```
+		start := strings.Index(s, "```")
+		end := strings.LastIndex(s, "```")
+		if start != -1 && end != -1 && start != end {
+			content := s[start+3 : end]
+			// Strip language identifier if present (e.g. ```rlm)
+			if strings.HasPrefix(content, "rlm") {
+				content = content[3:]
+			} else if strings.HasPrefix(content, "text") {
+				content = content[4:]
+			}
+			return strings.TrimSpace(content)
+		}
+	}
+	return s
+}
+
+func FormatPrompt(dialectCard, task, obsJSON string) string {
+	return fmt.Sprintf(`%s
+
+SYSTEM INSTRUCTIONS:
+- You are an EnvLLM Agent.
+- Your task is: %s
+- You communicate ONLY by emitting EnvLLM-DSL 0.1 CELL blocks.
+- One CELL per turn.
+- A CELL starts with "CELL <name>:" followed by indented statements.
+- Every statement must be indented by EXACTLY 2 spaces.
+- NO line numbers, NO preambles, NO conversational text, NO "NEXT CELL:".
+- Use the available "PROMPT" variable to access initial content.
+- Use "SET_FINAL SOURCE <expr>" when the task is complete.
+
+EXAMPLE VALID OUTPUT:
+CELL find_data:
+  FIND_TEXT SOURCE PROMPT NEEDLE "target" MODE FIRST IGNORE_CASE true INTO pos
+  WINDOW_TEXT SOURCE PROMPT CENTER pos RADIUS 100 INTO snippet
+  SET_FINAL SOURCE snippet
+
+OBSERVATION:
+%s
+
+NEXT CELL:`, dialectCard, task, obsJSON)
 }

@@ -227,20 +227,38 @@
           ],
           "into": true
         },
-        {
-          "name": "GET_SPAN_END",
-          "capabilities": [
-            "pure"
-          ],
-          "result_type": "INT",
-          "signature": [
             {
-              "kw": "SOURCE",
-              "type": "SPAN"
+              "name": "GET_SPAN_END",
+              "capabilities": [
+                "pure"
+              ],
+              "result_type": "INT",
+              "signature": [
+                {
+                  "kw": "SOURCE",
+                  "type": "SPAN"
+                }
+              ],
+              "into": true
+            },
+            {
+              "name": "CONCAT",
+              "capabilities": [
+                "pure"
+              ],
+              "result_type": "TEXT",
+              "signature": [
+                {
+                  "kw": "A",
+                  "type": "TEXT"
+                },
+                {
+                  "kw": "B",
+                  "type": "TEXT"
+                }
+              ],
+              "into": true
             }
-          ],
-          "into": true
+          ]
         }
-      ]
-    }
-    
+        

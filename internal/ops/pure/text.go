@@ -108,3 +108,14 @@ func GetSpanEnd(s *runtime.Session, source runtime.Value) (runtime.Value, error)
 	span := source.V.(runtime.Span)
 	return runtime.Value{Kind: runtime.KindInt, V: span.End}, nil
 }
+
+// Concat implements the CONCAT operation.
+func Concat(s *runtime.Session, a, b runtime.Value) (runtime.Value, error) {
+	ha := a.V.(runtime.TextHandle)
+	hb := b.V.(runtime.TextHandle)
+	
+	ta, _ := s.Stores.Text.Get(ha)
+	tb, _ := s.Stores.Text.Get(hb)
+	
+	return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(ta + tb)}, nil
+}

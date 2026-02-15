@@ -20,3 +20,13 @@ Ops:
 - READ_FILE PATH <TEXT> INTO <TEXT>
 - WRITE_FILE PATH <TEXT> SOURCE <TEXT> INTO <BOOL>
 - LIST_DIR PATH <TEXT> INTO <JSON>
+- CONCAT A <TEXT> B <TEXT> INTO <TEXT>
+- GET_SPAN_START SOURCE <SPAN> INTO <INT>
+- GET_SPAN_END SOURCE <SPAN> INTO <INT>
+- SLICE_TEXT SOURCE <TEXT> START <INT> END <INT> INTO <TEXT>
+
+Notes:
+- NO string concatenation with '+'. Use CONCAT.
+- NO property access with '.'. Use JSON_GET or GET_SPAN_START.
+- NO templates with '{{}}' or '${}'.
+- If you need to transform text to JSON, use SUBCALL or JSON_PARSE.

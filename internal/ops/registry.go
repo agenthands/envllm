@@ -115,6 +115,9 @@ func (r *Registry) registerDefaults() {
 	r.impls["GET_SPAN_END"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 		return pure.GetSpanEnd(s, args[0])
 	}
+	r.impls["CONCAT"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+		return pure.Concat(s, args[0], args[1])
+	}
 }
 
 // Dispatch implements runtime.OpDispatcher.

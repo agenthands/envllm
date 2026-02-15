@@ -53,9 +53,12 @@ func (p *Program) Execute(ctx context.Context, opt ExecOptions) (runtime.ExecRes
 	tbl, err := ops.LoadTable("assets/ops.json")
 	if err != nil {
 		// Fallback for tests or relative paths
-		tbl, err = ops.LoadTable("../../assets/ops.json")
+		tbl, err = ops.LoadTable("../assets/ops.json")
 		if err != nil {
-			return runtime.ExecResult{}, fmt.Errorf("failed to load ops table: %v", err)
+			tbl, err = ops.LoadTable("../../assets/ops.json")
+			if err != nil {
+				return runtime.ExecResult{}, fmt.Errorf("failed to load ops table: %v", err)
+			}
 		}
 	}
 	reg := ops.NewRegistry(tbl)
