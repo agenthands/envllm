@@ -22,6 +22,9 @@ func (m *mockTextStore) Get(h TextHandle) (string, bool) { return "", false }
 func (m *mockTextStore) Window(h TextHandle, center, radius int) (TextHandle, error) {
 	return TextHandle{ID: "w1", Bytes: 10}, nil
 }
+func (m *mockTextStore) Slice(h TextHandle, start, end int) (TextHandle, error) {
+	return TextHandle{ID: "s1", Bytes: 10}, nil
+}
 
 func TestSession_ExecuteCell(t *testing.T) {
 	policy := Policy{
@@ -114,7 +117,7 @@ func TestSession_EvalExpr_Ident(t *testing.T) {
 	s := NewSession(Policy{}, nil)
 	s.Env.Define("x", Value{Kind: KindInt, V: 100})
 
-	val, err := s.evalExpr(&ast.IdentExpr{Name: "x"})
+	val, err := s.EvalExpr(&ast.IdentExpr{Name: "x"})
 	if err != nil {
 		t.Fatalf("evalExpr failed: %v", err)
 	}
@@ -122,7 +125,7 @@ func TestSession_EvalExpr_Ident(t *testing.T) {
 		t.Errorf("expected 100, got %v", val.V)
 	}
 
-	_, err = s.evalExpr(&ast.IdentExpr{Name: "y", Loc: lex.Loc{File: "f", Line: 1}})
+	_, err = s.EvalExpr(&ast.IdentExpr{Name: "y", Loc: lex.Loc{File: "f", Line: 1}})
 	if err == nil {
 		t.Errorf("expected error for undefined variable")
 	}
@@ -132,14 +135,14 @@ func TestSession_EvalExpr_Errors(t *testing.T) {
 	s := NewSession(Policy{}, nil)
 	
 	// Test raw string
-	val, _ := s.evalExpr(&ast.StringExpr{Value: "raw"})
+	val, _ := s.EvalExpr(&ast.StringExpr{Value: "raw"})
 	if val.Kind != KindString {
 		t.Errorf("expected KindString for raw string")
 	}
 
 	// Test unknown expression type
 	type unknownExpr struct{ ast.Expr }
-	_, err := s.evalExpr(&unknownExpr{})
+	_, err := s.EvalExpr(&unknownExpr{})
 	if err == nil {
 		t.Errorf("expected error for unknown expression type")
 	}

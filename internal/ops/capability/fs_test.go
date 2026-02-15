@@ -27,6 +27,9 @@ func (m *mockTextStore) Get(h runtime.TextHandle) (string, bool) {
 func (m *mockTextStore) Window(h runtime.TextHandle, center, radius int) (runtime.TextHandle, error) {
 	return runtime.TextHandle{}, nil
 }
+func (m *mockTextStore) Slice(h runtime.TextHandle, start, end int) (runtime.TextHandle, error) {
+	return runtime.TextHandle{}, nil
+}
 
 func TestFS_Ops(t *testing.T) {
 	tmpDir := t.TempDir()

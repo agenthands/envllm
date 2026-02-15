@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/agenthands/envllm/internal/ast"
 	"github.com/agenthands/envllm/internal/runtime"
 )
 
@@ -35,6 +36,13 @@ func (m *mockTextStore) Get(h runtime.TextHandle) (string, bool) {
 func (m *mockTextStore) Window(h runtime.TextHandle, center, radius int) (runtime.TextHandle, error) {
 	return runtime.TextHandle{ID: "w1", Bytes: 10}, nil
 }
+func (m *mockTextStore) Slice(h runtime.TextHandle, start, end int) (runtime.TextHandle, error) {
+	return runtime.TextHandle{ID: "s1", Bytes: 10}, nil
+}
+
+func exprToKwArg(kw string, expr ast.Expr) ast.KwArg {
+	return ast.KwArg{Keyword: kw, Value: expr}
+}
 
 func TestSubcall(t *testing.T) {
 	tbl, _ := LoadTable("../../assets/ops.json")
@@ -56,10 +64,13 @@ func TestSubcall(t *testing.T) {
 	s.Host = host
 
 	taskHandle := ts.Add("test")
-	args := []runtime.KwArg{
-		{Keyword: "SOURCE", Value: runtime.Value{Kind: runtime.KindText, V: runtime.TextHandle{ID: "t1"}}},
-		{Keyword: "TASK", Value: runtime.Value{Kind: runtime.KindText, V: taskHandle}},
-		{Keyword: "DEPTH_COST", Value: runtime.Value{Kind: runtime.KindInt, V: 1}},
+	s.Env.Define("task_var", runtime.Value{Kind: runtime.KindText, V: taskHandle})
+	s.Env.Define("prompt_var", runtime.Value{Kind: runtime.KindText, V: runtime.TextHandle{ID: "t1"}})
+
+	args := []ast.KwArg{
+		exprToKwArg("SOURCE", &ast.IdentExpr{Name: "prompt_var"}),
+		exprToKwArg("TASK", &ast.IdentExpr{Name: "task_var"}),
+		exprToKwArg("DEPTH_COST", &ast.IntExpr{Value: 1}),
 	}
 
 	res, err := reg.Dispatch(s, "SUBCALL", args)
@@ -91,10 +102,13 @@ func TestSubcall_BudgetExceeded(t *testing.T) {
 	s.Host = &mockHost{}
 
 	taskHandle := ts.Add("test")
-	args := []runtime.KwArg{
-		{Keyword: "SOURCE", Value: runtime.Value{Kind: runtime.KindText, V: runtime.TextHandle{ID: "t1"}}},
-		{Keyword: "TASK", Value: runtime.Value{Kind: runtime.KindText, V: taskHandle}},
-		{Keyword: "DEPTH_COST", Value: runtime.Value{Kind: runtime.KindInt, V: 1}},
+	s.Env.Define("task_var", runtime.Value{Kind: runtime.KindText, V: taskHandle})
+	s.Env.Define("prompt_var", runtime.Value{Kind: runtime.KindText, V: runtime.TextHandle{ID: "t1"}})
+
+	args := []ast.KwArg{
+		exprToKwArg("SOURCE", &ast.IdentExpr{Name: "prompt_var"}),
+		exprToKwArg("TASK", &ast.IdentExpr{Name: "task_var"}),
+		exprToKwArg("DEPTH_COST", &ast.IntExpr{Value: 1}),
 	}
 
 	// First call ok
@@ -119,10 +133,13 @@ func TestSubcall_BudgetExceeded(t *testing.T) {
 		AllowedCapabilities: map[string]bool{"llm": true},
 	}, ts)
 	s2.Host = &mockHost{}
-	args2 := []runtime.KwArg{
-		{Keyword: "SOURCE", Value: runtime.Value{Kind: runtime.KindText, V: runtime.TextHandle{ID: "t1"}}},
-		{Keyword: "TASK", Value: runtime.Value{Kind: runtime.KindText, V: taskHandle}},
-		{Keyword: "DEPTH_COST", Value: runtime.Value{Kind: runtime.KindInt, V: 6}},
+	s2.Env.Define("task_var", runtime.Value{Kind: runtime.KindText, V: taskHandle})
+	s2.Env.Define("prompt_var", runtime.Value{Kind: runtime.KindText, V: runtime.TextHandle{ID: "t1"}})
+
+	args2 := []ast.KwArg{
+		exprToKwArg("SOURCE", &ast.IdentExpr{Name: "prompt_var"}),
+		exprToKwArg("TASK", &ast.IdentExpr{Name: "task_var"}),
+		exprToKwArg("DEPTH_COST", &ast.IntExpr{Value: 6}),
 	}
 	_, err = reg.Dispatch(s2, "SUBCALL", args2)
 	if err == nil {
@@ -142,10 +159,13 @@ func TestCapabilityGating(t *testing.T) {
 	s.Host = &mockHost{}
 
 	taskHandle := ts.Add("test")
-	args := []runtime.KwArg{
-		{Keyword: "SOURCE", Value: runtime.Value{Kind: runtime.KindText, V: runtime.TextHandle{ID: "t1"}}},
-		{Keyword: "TASK", Value: runtime.Value{Kind: runtime.KindText, V: taskHandle}},
-		{Keyword: "DEPTH_COST", Value: runtime.Value{Kind: runtime.KindInt, V: 1}},
+	s.Env.Define("task_var", runtime.Value{Kind: runtime.KindText, V: taskHandle})
+	s.Env.Define("prompt_var", runtime.Value{Kind: runtime.KindText, V: runtime.TextHandle{ID: "t1"}})
+
+	args := []ast.KwArg{
+		exprToKwArg("SOURCE", &ast.IdentExpr{Name: "prompt_var"}),
+		exprToKwArg("TASK", &ast.IdentExpr{Name: "task_var"}),
+		exprToKwArg("DEPTH_COST", &ast.IntExpr{Value: 1}),
 	}
 
 	_, err := reg.Dispatch(s, "SUBCALL", args)
@@ -183,7 +203,8 @@ func TestTable_ValidateSignature_Errors(t *testing.T) {
 func TestRegistry_Dispatch_Errors(t *testing.T) {
 	tbl, _ := LoadTable("../../assets/ops.json")
 	reg := NewRegistry(tbl)
-	s := runtime.NewSession(runtime.Policy{}, nil)
+	ts := &mockTextStore{content: make(map[string]string)}
+	s := runtime.NewSession(runtime.Policy{}, ts)
 
 	// Unknown op
 	_, err := reg.Dispatch(s, "UNKNOWN", nil)
@@ -193,13 +214,16 @@ func TestRegistry_Dispatch_Errors(t *testing.T) {
 
 	// Missing impl
 	delete(reg.impls, "STATS")
-	args := []runtime.KwArg{{Keyword: "SOURCE", Value: runtime.Value{Kind: runtime.KindText}}}
+	h := ts.Add("test")
+	s.Env.Define("h", runtime.Value{Kind: runtime.KindText, V: h})
+	args := []ast.KwArg{exprToKwArg("SOURCE", &ast.IdentExpr{Name: "h"})}
 	_, err = reg.Dispatch(s, "STATS", args)
 	if err == nil {
 		t.Errorf("expected error for missing implementation")
 	}
 
 	// Test Result type mismatch
+	reg.registerDefaults() // restore STATS
 	reg.impls["STATS"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 		return runtime.Value{Kind: runtime.KindInt, V: 1}, nil
 	}
@@ -216,18 +240,19 @@ func TestRegistry_Dispatch_AllPure(t *testing.T) {
 	s := runtime.NewSession(runtime.Policy{}, ts)
 	
 	h := ts.Add("test")
+	s.Env.Define("h", runtime.Value{Kind: runtime.KindText, V: h})
 	
 	// STATS
-	_, err := reg.Dispatch(s, "STATS", []runtime.KwArg{{Keyword: "SOURCE", Value: runtime.Value{Kind: runtime.KindText, V: h}}})
+	_, err := reg.Dispatch(s, "STATS", []ast.KwArg{exprToKwArg("SOURCE", &ast.IdentExpr{Name: "h"})})
 	if err != nil {
 		t.Errorf("STATS failed: %v", err)
 	}
 
 	// WINDOW_TEXT
-	_, err = reg.Dispatch(s, "WINDOW_TEXT", []runtime.KwArg{
-		{Keyword: "SOURCE", Value: runtime.Value{Kind: runtime.KindText, V: h}},
-		{Keyword: "CENTER", Value: runtime.Value{Kind: runtime.KindInt, V: 0}},
-		{Keyword: "RADIUS", Value: runtime.Value{Kind: runtime.KindInt, V: 0}},
+	_, err = reg.Dispatch(s, "WINDOW_TEXT", []ast.KwArg{
+		exprToKwArg("SOURCE", &ast.IdentExpr{Name: "h"}),
+		exprToKwArg("CENTER", &ast.IntExpr{Value: 0}),
+		exprToKwArg("RADIUS", &ast.IntExpr{Value: 0}),
 	})
 	if err != nil {
 		t.Errorf("WINDOW_TEXT failed: %v", err)
@@ -235,7 +260,8 @@ func TestRegistry_Dispatch_AllPure(t *testing.T) {
 
 	// JSON_PARSE
 	hj := ts.Add(`{"a":1}`)
-	_, err = reg.Dispatch(s, "JSON_PARSE", []runtime.KwArg{{Keyword: "SOURCE", Value: runtime.Value{Kind: runtime.KindText, V: hj}}})
+	s.Env.Define("hj", runtime.Value{Kind: runtime.KindText, V: hj})
+	_, err = reg.Dispatch(s, "JSON_PARSE", []ast.KwArg{exprToKwArg("SOURCE", &ast.IdentExpr{Name: "hj"})})
 	if err != nil {
 		t.Errorf("JSON_PARSE failed: %v", err)
 	}

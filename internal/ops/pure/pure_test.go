@@ -25,6 +25,9 @@ func (m *mockTextStore) Get(h runtime.TextHandle) (string, bool) {
 func (m *mockTextStore) Window(h runtime.TextHandle, center, radius int) (runtime.TextHandle, error) {
 	return runtime.TextHandle{ID: "w1", Bytes: 10}, nil
 }
+func (m *mockTextStore) Slice(h runtime.TextHandle, start, end int) (runtime.TextHandle, error) {
+	return runtime.TextHandle{ID: "s1", Bytes: 10}, nil
+}
 
 func TestPureOps(t *testing.T) {
 	ts := &mockTextStore{content: make(map[string]string)}

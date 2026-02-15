@@ -1,0 +1,1 @@
+{"id":"D1-recursive-summary-001","suite":"D","task":"Recursive summary of history","prompt_ref":"prompts/D-recursion.txt","policy":{"max_subcalls":10, "allowed_capabilities":{"llm": true}},"scoring":{"mode":"status_ok"}}

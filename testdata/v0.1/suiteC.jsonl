@@ -1,0 +1,3 @@
+{"id":"C1-needle-001","suite":"C","task":"Extract credentials JSON","prompt_ref":"prompts/C1-needle-001.txt","expected_ref":"expected/C1-needle-001.json","scoring":{"mode":"json_semantic"}}
+{"id":"C2-search-window-001","suite":"C","task":"Find error offset","prompt_ref":"prompts/C-rlm-tasks.txt","scoring":{"mode":"status_ok"}}
+{"id":"C3-json-extract-001","suite":"C","task":"Extract config JSON","prompt_ref":"prompts/C-rlm-tasks.txt","scoring":{"mode":"status_ok"}}
