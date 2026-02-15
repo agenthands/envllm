@@ -1,0 +1,4 @@
+RLMDSL 0.1
+CELL test:
+  PRINT SOURCE "hello from cli"
+  SET_FINAL SOURCE 100

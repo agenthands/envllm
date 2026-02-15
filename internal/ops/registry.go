@@ -34,9 +34,15 @@ func (r *Registry) registerDefaults() {
 		return pure.Stats(s, args[0])
 	}
 	r.impls["FIND_TEXT"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
-		// Table validation ensures these V types are correct based on Kind
-		mode, _ := args[2].V.(string)
-		ignoreCase, _ := args[3].V.(bool)
+		// Safe extraction of enum/bool from args
+		mode := "FIRST"
+		if m, ok := args[2].V.(string); ok {
+			mode = m
+		}
+		ignoreCase := false
+		if ic, ok := args[3].V.(bool); ok {
+			ignoreCase = ic
+		}
 		return pure.FindText(s, args[0], args[1], mode, ignoreCase)
 	}
 	r.impls["WINDOW_TEXT"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
@@ -46,14 +52,24 @@ func (r *Registry) registerDefaults() {
 		return pure.SliceText(s, args[0], args[1].V.(int), args[2].V.(int))
 	}
 	r.impls["FIND_REGEX"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
-		return pure.FindRegex(s, args[0], args[1], args[2].V.(string))
+		mode := "FIRST"
+		if m, ok := args[2].V.(string); ok {
+			mode = m
+		}
+		return pure.FindRegex(s, args[0], args[1], mode)
 	}
 	// JSON Ops
 	r.impls["JSON_PARSE"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 		return pure.JSONParse(s, args[0])
 	}
 	r.impls["JSON_GET"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
-		return pure.JSONGet(s, args[0], args[1].V.(string))
+		path := ""
+		if p, ok := args[1].V.(string); ok {
+			path = p
+		} else if h, ok := args[1].V.(runtime.TextHandle); ok {
+			path, _ = s.Stores.Text.Get(h)
+		}
+		return pure.JSONGet(s, args[0], path)
 	}
 	// Recursive Ops
 	r.impls["SUBCALL"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
@@ -62,14 +78,22 @@ func (r *Registry) registerDefaults() {
 		}
 
 		source := args[0].V.(runtime.TextHandle)
-		taskHandle := args[1].V.(runtime.TextHandle)
-		depthCost := args[2].V.(int)
-
-		// Get task string from handle
-		task, ok := s.Stores.Text.Get(taskHandle)
-		if !ok {
-			return runtime.Value{}, fmt.Errorf("SUBCALL failed: task text not found")
+		// Get task string
+		var task string
+		if args[1].Kind == runtime.KindString {
+			task = args[1].V.(string)
+		} else if args[1].Kind == runtime.KindText {
+			taskHandle := args[1].V.(runtime.TextHandle)
+			var ok bool
+			task, ok = s.Stores.Text.Get(taskHandle)
+			if !ok {
+				return runtime.Value{}, fmt.Errorf("SUBCALL failed: task text not found")
+			}
+		} else {
+			return runtime.Value{}, fmt.Errorf("SUBCALL failed: TASK must be TEXT or STRING, got %s", args[1].Kind)
 		}
+
+		depthCost := args[2].V.(int)
 
 		// Validate budgets
 		if s.Policy.MaxSubcalls > 0 && s.SubcallCount >= s.Policy.MaxSubcalls {

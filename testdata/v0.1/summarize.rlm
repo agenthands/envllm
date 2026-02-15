@@ -1,0 +1,9 @@
+RLMDSL 0.1
+
+CELL analyze:
+  STATS SOURCE PROMPT INTO stats
+  PRINT SOURCE stats
+
+CELL summarize:
+  SUBCALL SOURCE PROMPT TASK "Summarize the following text in 3 bullet points." DEPTH_COST 1 INTO summary
+  SET_FINAL SOURCE summary

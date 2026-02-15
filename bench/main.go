@@ -4,11 +4,15 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/agenthands/envllm/bench/runner"
+	"github.com/agenthands/envllm/examples/bridge"
+	"github.com/tmc/langchaingo/llms"
+	"github.com/tmc/langchaingo/llms/googleai"
 )
 
 type MockModel struct{}
@@ -47,7 +51,22 @@ func (m *MockModel) Complete(ctx context.Context, task, prompt string) (string, 
 	}
 }
 
+type RealLLMModel struct {
+	model       llms.Model
+	dialectCard string
+}
+
+func (m *RealLLMModel) Complete(ctx context.Context, task, prompt string) (string, error) {
+	// For benchmarking, we use a single-turn completion driver
+	obsJSON := "{}" 
+	llmPrompt := bridge.FormatPrompt(m.dialectCard, task, obsJSON)
+	return llms.GenerateFromSinglePrompt(ctx, m.model, llmPrompt)
+}
+
 func main() {
+	useLLM := flag.Bool("llm", false, "Use a real LLM for benchmarks")
+	flag.Parse()
+
 	fmt.Println("EnvLLM Benchmark Runner v0.1")
 	fmt.Println("----------------------------")
 
@@ -60,15 +79,37 @@ func main() {
 		return
 	}
 
-	model := &MockModel{}
+	var model runner.Model
 	ctx := context.Background()
+
+	if *useLLM {
+		apiKey := os.Getenv("GEMINI_API_KEY")
+		if apiKey == "" {
+			apiKey = os.Getenv("GOOGLE_API_KEY")
+		}
+		if apiKey == "" {
+			fmt.Println("Error: GEMINI_API_KEY or GOOGLE_API_KEY not set")
+			os.Exit(1)
+		}
+		m, err := googleai.New(ctx, googleai.WithAPIKey(apiKey))
+		if err != nil {
+			fmt.Printf("Error creating model: %v\n", err)
+			os.Exit(1)
+		}
+		card, _ := os.ReadFile("assets/dialect_card.md")
+		model = &RealLLMModel{model: m, dialectCard: string(card)}
+		fmt.Println("Mode: Real LLM (Gemini Flash)")
+	} else {
+		model = &MockModel{}
+		fmt.Println("Mode: Mock Model")
+	}
 
 	for _, f := range files {
 		if filepath.Ext(f.Name()) != ".jsonl" {
 			continue
 		}
 
-		fmt.Printf("Running suite: %s\n", f.Name())
+		fmt.Printf("\nRunning suite: %s\n", f.Name())
 		runSuite(ctx, filepath.Join(casesDir, f.Name()), model, baseDir)
 	}
 }
