@@ -57,6 +57,18 @@ func WindowText(s *runtime.Session, source runtime.Value, center int, radius int
 	return runtime.Value{Kind: runtime.KindText, V: wh}, nil
 }
 
+// SliceText implements the SLICE_TEXT operation.
+func SliceText(s *runtime.Session, source runtime.Value, start, end int) (runtime.Value, error) {
+	h := source.V.(runtime.TextHandle)
+	
+	wh, err := s.Stores.Text.Slice(h, start, end)
+	if err != nil {
+		return runtime.Value{}, err
+	}
+
+	return runtime.Value{Kind: runtime.KindText, V: wh}, nil
+}
+
 // FindRegex implements the FIND_REGEX operation.
 func FindRegex(s *runtime.Session, source runtime.Value, pattern runtime.Value, mode string) (runtime.Value, error) {
 	h := source.V.(runtime.TextHandle)
@@ -83,4 +95,16 @@ func FindRegex(s *runtime.Session, source runtime.Value, pattern runtime.Value, 
 	}
 
 	return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: match[0], End: match[1]}}, nil
+}
+
+// GetSpanStart implements the GET_SPAN_START operation.
+func GetSpanStart(s *runtime.Session, source runtime.Value) (runtime.Value, error) {
+	span := source.V.(runtime.Span)
+	return runtime.Value{Kind: runtime.KindInt, V: span.Start}, nil
+}
+
+// GetSpanEnd implements the GET_SPAN_END operation.
+func GetSpanEnd(s *runtime.Session, source runtime.Value) (runtime.Value, error) {
+	span := source.V.(runtime.Span)
+	return runtime.Value{Kind: runtime.KindInt, V: span.End}, nil
 }

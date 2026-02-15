@@ -124,6 +124,9 @@ func (l *Lexer) skipWhitespace() {
 
 func (l *Lexer) readIdentifier() string {
 	pos := l.pos
+	if l.ch == '-' {
+		l.readChar()
+	}
 	for isLetter(l.ch) || unicode.IsDigit(l.ch) || l.ch == '.' || l.ch == '_' {
 		l.readChar()
 	}

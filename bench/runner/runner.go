@@ -40,11 +40,12 @@ type ScoringConfig struct {
 }
 
 type Result struct {
-	CaseID string             `json:"case_id"`
-	Passed bool               `json:"passed"`
-	Status string             `json:"status"`
-	Output runtime.ExecResult `json:"output"`
-	Error  string             `json:"error,omitempty"`
+	CaseID   string             `json:"case_id"`
+	Passed   bool               `json:"passed"`
+	Status   string             `json:"status"`
+	Output   runtime.ExecResult `json:"output"`
+	Error    string             `json:"error,omitempty"`
+	Mismatch string             `json:"mismatch,omitempty"`
 }
 
 func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, error) {
@@ -89,46 +90,60 @@ func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, erro
 		return Result{CaseID: c.ID, Error: fmt.Sprintf("execution crashed: %v", err), Passed: false}, nil
 	}
 
-	passed := scoreResult(c, execRes, baseDir)
+	passed, mismatch := scoreResult(c, execRes, baseDir)
 
 	return Result{
-		CaseID: c.ID,
-		Passed: passed,
-		Status: execRes.Status,
-		Output: execRes,
+		CaseID:   c.ID,
+		Passed:   passed,
+		Status:   execRes.Status,
+		Output:   execRes,
+		Mismatch: mismatch,
 	}, nil
 }
 
-func scoreResult(c Case, res runtime.ExecResult, baseDir string) bool {
+func scoreResult(c Case, res runtime.ExecResult, baseDir string) (bool, string) {
 	switch c.Scoring.Mode {
 	case "status_ok":
-		return res.Status == "ok"
+		return res.Status == "ok", ""
 	case "status_budget_exceeded":
-		return res.Status == "budget_exceeded"
+		return res.Status == "budget_exceeded", ""
 	case "status_capability_denied":
-		return res.Status == "capability_denied"
+		return res.Status == "capability_denied", ""
 	case "status_error":
-		return res.Status == "error"
+		return res.Status == "error", ""
 	case "status_compile_error":
-		return res.Status == "compile_error"
+		return res.Status == "compile_error", ""
 	case "json_semantic":
 		if res.Status != "ok" || res.Final == nil {
-			return false
+			return false, "status not ok or final missing"
 		}
 		if c.ExpectedRef == "" {
-			return true
+			return true, ""
 		}
 		expectedPath := filepath.Join(baseDir, c.ExpectedRef)
 		expectedBytes, err := os.ReadFile(expectedPath)
 		if err != nil {
-			return false
+			return false, fmt.Sprintf("failed to read expected file: %v", err)
 		}
 		var expectedVal interface{}
 		if err := json.Unmarshal(expectedBytes, &expectedVal); err != nil {
-			return false
+			return false, fmt.Sprintf("failed to unmarshal expected JSON: %v", err)
 		}
-		return reflect.DeepEqual(res.Final.V, expectedVal)
+
+		// Handle numeric comparison (json.Unmarshal uses float64)
+		if ev, ok := expectedVal.(float64); ok {
+			if gv, ok := res.Final.V.(int); ok {
+				if float64(gv) == ev {
+					return true, ""
+				}
+			}
+		}
+
+		if reflect.DeepEqual(res.Final.V, expectedVal) {
+			return true, ""
+		}
+		return false, fmt.Sprintf("got %v (%T), want %v (%T)", res.Final.V, res.Final.V, expectedVal, expectedVal)
 	default:
-		return res.Status == "ok"
+		return res.Status == "ok", ""
 	}
 }

@@ -42,6 +42,9 @@ func (r *Registry) registerDefaults() {
 	r.impls["WINDOW_TEXT"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 		return pure.WindowText(s, args[0], args[1].V.(int), args[2].V.(int))
 	}
+	r.impls["SLICE_TEXT"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+		return pure.SliceText(s, args[0], args[1].V.(int), args[2].V.(int))
+	}
 	r.impls["FIND_REGEX"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 		return pure.FindRegex(s, args[0], args[1], args[2].V.(string))
 	}
@@ -105,6 +108,12 @@ func (r *Registry) registerDefaults() {
 	}
 	r.impls["LIST_DIR"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 		return capability.ListDir(s, args[0])
+	}
+	r.impls["GET_SPAN_START"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+		return pure.GetSpanStart(s, args[0])
+	}
+	r.impls["GET_SPAN_END"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+		return pure.GetSpanEnd(s, args[0])
 	}
 }
 

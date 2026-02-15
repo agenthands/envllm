@@ -14,12 +14,20 @@ import (
 type MockModel struct{}
 
 func (m *MockModel) Complete(ctx context.Context, task, prompt string) (string, error) {
-	// Simple mapping for testing the runner
 	switch task {
 	case "Parse basic cell":
 		return "CELL test:\n  PRINT SOURCE \"hello\"\n  SET_FINAL SOURCE true\n", nil
 	case "Validate strict 2-space indentation":
 		return "CELL test:\nPRINT SOURCE \"wrong\"\n", nil 
+	case "Handle null and negative numbers":
+		return `CELL test:
+  PRINT SOURCE null
+  SET_FINAL SOURCE -42
+`, nil
+	case "Handle escape sequences in strings":
+		return `CELL test:
+  SET_FINAL SOURCE "line1\nline2\ttab"
+`, nil
 	case "Enforce step budget":
 		return "CELL test:\n  PRINT SOURCE 1\n  PRINT SOURCE 2\n  PRINT SOURCE 3\n", nil
 	case "Denied capability access":
@@ -28,6 +36,10 @@ func (m *MockModel) Complete(ctx context.Context, task, prompt string) (string, 
 		return "CELL test:\n  SUBCALL SOURCE PROMPT TASK \"recursive\" DEPTH_COST 10 INTO out\n  SET_FINAL SOURCE out\n", nil
 	case "Extract credentials JSON":
 		return "CELL test:\n  JSON_PARSE SOURCE \"{\\\"user\\\": \\\"admin\\\", \\\"pass\\\": \\\"hunter2\\\"}\" INTO out\n  SET_FINAL SOURCE out\n", nil
+	case "Find error offset":
+		return "CELL test:\n  FIND_TEXT SOURCE PROMPT NEEDLE \"ERROR\" MODE FIRST IGNORE_CASE false INTO pos\n  ASSERT COND true MESSAGE \"Found error\"\n  SET_FINAL SOURCE pos\n", nil
+	case "Extract config JSON":
+		return "CELL test:\n  FIND_REGEX SOURCE PROMPT PATTERN \"\\\\{.*\\\\}\" MODE FIRST INTO span\n  GET_SPAN_START SOURCE span INTO start\n  GET_SPAN_END SOURCE span INTO end\n  SLICE_TEXT SOURCE PROMPT START start END end INTO snippet\n  JSON_PARSE SOURCE snippet INTO cfg\n  SET_FINAL SOURCE cfg\n", nil
 	case "Recursive summary of history":
 		return "CELL test:\n  FIND_TEXT SOURCE PROMPT NEEDLE \"Chapter 1\" MODE FIRST IGNORE_CASE true INTO p1\n  WINDOW_TEXT SOURCE PROMPT CENTER p1 RADIUS 100 INTO s1\n  SUBCALL SOURCE s1 TASK \"Summarize chapter 1\" DEPTH_COST 1 INTO r1\n  SET_FINAL SOURCE r1\n", nil
 	default:
@@ -90,6 +102,9 @@ func runSuite(ctx context.Context, path string, m runner.Model, baseDir string) 
 		fmt.Printf("  [%s] Case %s: %s (Status: %s)\n", status, c.ID, c.Task, res.Status)
 		if res.Error != "" {
 			fmt.Printf("    Error: %s\n", res.Error)
+		}
+		if res.Mismatch != "" {
+			fmt.Printf("    Mismatch: %s\n", res.Mismatch)
 		}
 		for _, e := range res.Output.Errors {
 			fmt.Printf("    DSL Error: [%s] %s\n", e.Code, e.Message)

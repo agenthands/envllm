@@ -1,4 +1,4 @@
 {"id":"A1-parser-001","suite":"A","task":"Parse basic cell","prompt_ref":"prompts/A-reliability.txt","scoring":{"mode":"status_ok"}}
 {"id":"A2-indent-001","suite":"A","task":"Validate strict 2-space indentation","prompt_ref":"prompts/A-reliability.txt","scoring":{"mode":"status_compile_error"}}
-{"id":"A3-literals-001","suite":"A","task":"Handle null and negative numbers","prompt_ref":"prompts/A-reliability.txt","scoring":{"mode":"status_ok"}}
-{"id":"A4-escapes-001","suite":"A","task":"Handle escape sequences in strings","prompt_ref":"prompts/A-reliability.txt","scoring":{"mode":"status_ok"}}
+{"id":"A3-literals-001","suite":"A","task":"Handle null and negative numbers","prompt_ref":"prompts/A-reliability.txt","expected_ref":"expected/A3-literals.json","scoring":{"mode":"json_semantic"}}
+{"id":"A4-escapes-001","suite":"A","task":"Handle escape sequences in strings","prompt_ref":"prompts/A-reliability.txt","expected_ref":"expected/A4-escapes.json","scoring":{"mode":"json_semantic"}}

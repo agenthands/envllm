@@ -67,6 +67,28 @@
       "into": true
     },
     {
+      "name": "SLICE_TEXT",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "TEXT",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "START",
+          "type": "INT"
+        },
+        {
+          "kw": "END",
+          "type": "INT"
+        }
+      ],
+      "into": true
+    },
+    {
       "name": "JSON_PARSE",
       "capabilities": [
         "pure"
@@ -177,19 +199,48 @@
       ],
       "into": true
     },
-    {
-      "name": "LIST_DIR",
-      "capabilities": [
-        "fs_read"
-      ],
-      "result_type": "JSON",
-      "signature": [
         {
-          "kw": "PATH",
-          "type": "TEXT"
+          "name": "LIST_DIR",
+          "capabilities": [
+            "fs_read"
+          ],
+          "result_type": "JSON",
+          "signature": [
+            {
+              "kw": "PATH",
+              "type": "TEXT"
+            }
+          ],
+          "into": true
+        },
+        {
+          "name": "GET_SPAN_START",
+          "capabilities": [
+            "pure"
+          ],
+          "result_type": "INT",
+          "signature": [
+            {
+              "kw": "SOURCE",
+              "type": "SPAN"
+            }
+          ],
+          "into": true
+        },
+        {
+          "name": "GET_SPAN_END",
+          "capabilities": [
+            "pure"
+          ],
+          "result_type": "INT",
+          "signature": [
+            {
+              "kw": "SOURCE",
+              "type": "SPAN"
+            }
+          ],
+          "into": true
         }
-      ],
-      "into": true
+      ]
     }
-  ]
-}
+    

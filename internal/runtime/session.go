@@ -27,6 +27,7 @@ type TextStore interface {
 	Add(text string) TextHandle
 	Get(h TextHandle) (string, bool)
 	Window(h TextHandle, center, radius int) (TextHandle, error)
+	Slice(h TextHandle, start, end int) (TextHandle, error)
 }
 
 // OpDispatcher allows the runtime to execute operations defined elsewhere.
