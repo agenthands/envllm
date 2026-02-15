@@ -57,7 +57,7 @@ func Start(in io.Reader, out io.Writer) {
 		}
 
 		l := lex.NewLexer("repl.rlm", src)
-		p := parse.NewParser(l)
+		p := parse.NewParser(l, parse.ModeCompat)
 		prog, err := p.Parse()
 		if err != nil {
 			fmt.Fprintf(out, "Parse error: %v\n", err)

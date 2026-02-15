@@ -8,14 +8,22 @@ import (
 	"github.com/agenthands/envllm/internal/lex"
 )
 
+type Mode int
+
+const (
+	ModeCompat Mode = iota
+	ModeStrict
+)
+
 type Parser struct {
 	l         *lex.Lexer
 	curToken  lex.Token
 	peekToken lex.Token
+	mode      Mode
 }
 
-func NewParser(l *lex.Lexer) *Parser {
-	p := &Parser{l: l}
+func NewParser(l *lex.Lexer, mode Mode) *Parser {
+	p := &Parser{l: l, mode: mode}
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -85,8 +93,8 @@ func (p *Parser) parseCell() (*ast.Cell, error) {
 			continue
 		}
 		
-		// Enforce strict 2-space indentation as per EBNF
-		if p.curToken.Loc.Col != 3 {
+		// Enforce strict 2-space indentation only in Strict mode
+		if p.mode == ModeStrict && p.curToken.Loc.Col != 3 {
 			return nil, fmt.Errorf("%s: expected exactly 2 spaces of indentation for statement", p.curToken.Loc)
 		}
 
@@ -139,6 +147,18 @@ func (p *Parser) parseOpStatement() (*ast.OpStmt, error) {
 	}
 	stmt.Into = p.curToken.Value
 	p.nextToken()
+
+	// Handle optional type annotation ": <Type>"
+	if p.curToken.Type == lex.TypeColon {
+		p.nextToken()
+		if p.curToken.Type != lex.TypeIdent {
+			return nil, fmt.Errorf("%s: expected type after ':'", p.curToken.Loc)
+		}
+		stmt.IntoType = p.curToken.Value
+		p.nextToken()
+	} else if p.mode == ModeStrict {
+		return nil, fmt.Errorf("%s: mandatory type annotation ': <Type>' missing in STRICT mode", p.curToken.Loc)
+	}
 
 	if err := p.expectNewline(); err != nil {
 		return nil, err

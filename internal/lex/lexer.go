@@ -91,7 +91,10 @@ func (l *Lexer) NextToken() Token {
 func (l *Lexer) readString() string {
 	l.readChar() // skip "
 	var s []rune
-	for l.ch != '"' && l.ch != 0 {
+	for l.ch != 0 {
+		if l.ch == '"' {
+			break
+		}
 		if l.ch == '\\' {
 			l.readChar()
 			switch l.ch {

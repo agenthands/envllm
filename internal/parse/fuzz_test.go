@@ -15,7 +15,7 @@ func FuzzParser(f *testing.F) {
 	}
 	f.Fuzz(func(t *testing.T, input string) {
 		l := lex.NewLexer("fuzz.rlm", input)
-		p := NewParser(l)
+		p := NewParser(l, ModeCompat)
 		p.Parse()
 	})
 }

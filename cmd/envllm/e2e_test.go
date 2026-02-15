@@ -37,7 +37,7 @@ CELL find:
   SET_FINAL SOURCE snippet
 `
 	l := lex.NewLexer("test.rlm", code)
-	p := parse.NewParser(l)
+	p := parse.NewParser(l, parse.ModeCompat)
 	prog, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse failed: %v", err)
@@ -93,7 +93,7 @@ CELL recurse:
   SET_FINAL SOURCE out
 `
 	l := lex.NewLexer("recurse.rlm", code)
-	p := parse.NewParser(l)
+	p := parse.NewParser(l, parse.ModeCompat)
 	prog, _ := p.Parse()
 
 	for _, cell := range prog.Cells {
@@ -134,7 +134,7 @@ CELL regex:
   SET_FINAL SOURCE email_span
 `
 	l := lex.NewLexer("regex.rlm", code)
-	p := parse.NewParser(l)
+	p := parse.NewParser(l, parse.ModeCompat)
 	prog, _ := p.Parse()
 
 	for _, cell := range prog.Cells {
@@ -155,7 +155,7 @@ CELL denied:
   SUBCALL SOURCE PROMPT TASK "summarize" DEPTH_COST 1 INTO out
 `
 	l2 := lex.NewLexer("denied.rlm", code2)
-	p2 := parse.NewParser(l2)
+	p2 := parse.NewParser(l2, parse.ModeCompat)
 	prog2, _ := p2.Parse()
 
 	err := s.ExecuteCell(context.Background(), prog2.Cells[0])
@@ -193,7 +193,7 @@ CELL fs:
   SET_FINAL SOURCE content
 `
 	l := lex.NewLexer("fs.rlm", code)
-	p := parse.NewParser(l)
+	p := parse.NewParser(l, parse.ModeCompat)
 	prog, _ := p.Parse()
 
 	for _, cell := range prog.Cells {

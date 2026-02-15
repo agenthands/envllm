@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"strings"
 	"testing"
 	"github.com/agenthands/envllm/internal/lex"
 )
@@ -11,7 +12,7 @@ CELL plan:
   STATS SOURCE PROMPT INTO stats
 `
 	l := lex.NewLexer("test.rlm", input)
-	p := NewParser(l)
+	p := NewParser(l, ModeCompat)
 	prog, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
@@ -48,7 +49,7 @@ CELL solve:
   SET_FINAL SOURCE "done"
 `
 	l := lex.NewLexer("full.rlm", input)
-	p := NewParser(l)
+	p := NewParser(l, ModeCompat)
 	prog, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
@@ -94,11 +95,50 @@ func TestParser_Errors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			mode := ModeCompat
+			if strings.Contains(tt.name, "indentation") {
+				mode = ModeStrict
+			}
 			l := lex.NewLexer("err.rlm", tt.input)
-			p := NewParser(l)
+			p := NewParser(l, mode)
 			_, err := p.Parse()
 			if err == nil {
 				t.Errorf("expected error for %q, got nil", tt.input)
+			}
+		})
+	}
+}
+
+func TestParser_StrictMode(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{
+			"Valid strict",
+			"RLMDSL 0.1\nCELL test:\n  STATS SOURCE PROMPT INTO out: JSON\n",
+			false,
+		},
+		{
+			"Invalid indentation in strict",
+			"RLMDSL 0.1\nCELL test:\nSTATS SOURCE PROMPT INTO out: JSON\n",
+			true,
+		},
+		{
+			"Missing type in strict",
+			"RLMDSL 0.1\nCELL test:\n  STATS SOURCE PROMPT INTO out\n",
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := lex.NewLexer("test.rlm", tt.input)
+			p := NewParser(l, ModeStrict)
+			_, err := p.Parse()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ModeStrict Parse(%s) error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			}
 		})
 	}

@@ -60,7 +60,7 @@ func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, erro
 		return Result{CaseID: c.ID, Error: fmt.Sprintf("model failed: %v", err)}, nil
 	}
 
-	prog, err := envllm.Compile(c.ID+".rlm", dslCode)
+	prog, err := envllm.Compile(c.ID+".rlm", dslCode, envllm.ModeCompat)
 	if err != nil {
 		return Result{CaseID: c.ID, Status: "compile_error", Error: fmt.Sprintf("compile failed: %v", err), Passed: c.Scoring.Mode == "status_compile_error"}, nil
 	}

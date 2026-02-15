@@ -29,7 +29,7 @@ CELL recursion:
   SET_FINAL SOURCE out
 
 CELL credentials:
-  JSON_PARSE SOURCE "{"user": "admin", "pass": "hunter2"}" INTO out
+  JSON_PARSE SOURCE "{\"user\": \"admin\", \"pass\": \"hunter2\"}" INTO out
   SET_FINAL SOURCE out
 
 CELL find_error:

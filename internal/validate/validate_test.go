@@ -18,7 +18,7 @@ CELL plan:
   STATS SOURCE PROMPT INTO stats
 `
 	l := lex.NewLexer("test.rlm", input)
-	p := parse.NewParser(l)
+	p := parse.NewParser(l, parse.ModeCompat)
 	prog, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
@@ -42,7 +42,7 @@ CELL plan:
   PRINT SOURCE "b"
 `
 	l := lex.NewLexer("test.rlm", input)
-	p := parse.NewParser(l)
+	p := parse.NewParser(l, parse.ModeCompat)
 	prog, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)

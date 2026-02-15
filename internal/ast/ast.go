@@ -39,11 +39,12 @@ type Stmt interface {
 
 // OpStmt represents a standard operation call: OP KW VAL... INTO ident.
 type OpStmt struct {
-	Loc    lex.Loc `json:"-"`
-	Type   string  `json:"type"` // "op"
-	OpName string  `json:"op_name"`
-	Args   []KwArg `json:"args"`
-	Into   string  `json:"into"`
+	Loc      lex.Loc `json:"-"`
+	Type     string  `json:"type"` // "op"
+	OpName   string  `json:"op_name"`
+	Args     []KwArg `json:"args"`
+	Into     string  `json:"into"`
+	IntoType string  `json:"into_type,omitempty"`
 }
 
 func (s *OpStmt) Pos() lex.Loc { return s.Loc }

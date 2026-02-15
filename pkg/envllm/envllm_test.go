@@ -12,7 +12,7 @@ func TestPublicAPI(t *testing.T) {
 CELL test:
   PRINT SOURCE "hello"
 `
-	prog, err := Compile("test.rlm", src)
+	prog, err := Compile("test.rlm", src, ModeCompat)
 	if err != nil {
 		t.Fatalf("Compile failed: %v", err)
 	}

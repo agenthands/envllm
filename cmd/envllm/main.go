@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"os"
 
+	dfmt "github.com/agenthands/envllm/internal/fmt"
+	"github.com/agenthands/envllm/internal/lint"
+	"github.com/agenthands/envllm/internal/migrate"
+	"github.com/agenthands/envllm/internal/ops"
 	"github.com/agenthands/envllm/internal/repl"
 	"github.com/agenthands/envllm/internal/runtime"
 	"github.com/agenthands/envllm/pkg/envllm"
@@ -25,6 +29,12 @@ func main() {
 		replCmd()
 	case "validate":
 		validate()
+	case "fmt":
+		fmtCmd()
+	case "migrate":
+		migrateCmd()
+	case "check":
+		checkCmd()
 	case "help", "-h", "--help":
 		usage()
 	default:
@@ -40,6 +50,9 @@ func usage() {
 	fmt.Println("  run <file>      Execute an RLMDSL script")
 	fmt.Println("  repl            Start an interactive REPL")
 	fmt.Println("  validate <file> Validate script syntax and ops")
+	fmt.Println("  fmt <file>      Format script to canonical form")
+	fmt.Println("  migrate <file>  Migrate v0.1 script to v0.2 STRICT")
+	fmt.Println("  check <file>    Check script for v0.2 canonical errors")
 	fmt.Println("  help            Show this help text")
 }
 
@@ -47,6 +60,7 @@ func run() {
 	runCmd := flag.NewFlagSet("run", flag.ExitOnError)
 	maxStmts := runCmd.Int("max-stmts", 100, "Maximum statements per cell")
 	timeout := runCmd.Duration("timeout", 0, "Maximum wall time for execution")
+	modeStr := runCmd.String("mode", "compat", "Parser mode (compat or strict)")
 
 	if len(os.Args) < 3 {
 		fmt.Println("Usage: envllm run <file> [flags]")
@@ -57,13 +71,18 @@ func run() {
 	filename := os.Args[2]
 	runCmd.Parse(os.Args[3:])
 
+	mode := envllm.ModeCompat
+	if *modeStr == "strict" {
+		mode = envllm.ModeStrict
+	}
+
 	src, err := os.ReadFile(filename)
 	if err != nil {
 		fmt.Printf("Error reading file: %v\n", err)
 		os.Exit(1)
 	}
 
-	prog, err := envllm.Compile(filename, string(src))
+	prog, err := envllm.Compile(filename, string(src), mode)
 	if err != nil {
 		fmt.Printf("Compilation error: %v\n", err)
 		os.Exit(1)
@@ -104,11 +123,82 @@ func validate() {
 		os.Exit(1)
 	}
 
-	_, err = envllm.Compile(filename, string(src))
+	_, err = envllm.Compile(filename, string(src), envllm.ModeCompat)
 	if err != nil {
 		fmt.Printf("Validation failed: %v\n", err)
 		os.Exit(1)
 	}
 
 	fmt.Println("Validation successful")
+}
+
+func fmtCmd() {
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: envllm fmt <file>")
+		os.Exit(1)
+	}
+	filename := os.Args[2]
+	src, _ := os.ReadFile(filename)
+	prog, err := envllm.Compile(filename, string(src), envllm.ModeCompat)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Print(dfmt.Format(prog.AST))
+}
+
+func migrateCmd() {
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: envllm migrate <file>")
+		os.Exit(1)
+	}
+	filename := os.Args[2]
+	src, _ := os.ReadFile(filename)
+	
+	tbl, _ := ops.LoadTable("assets/ops.json")
+	canonical, report, err := migrate.Migrate(string(src), tbl)
+	if err != nil {
+		fmt.Printf("Migration failed: %v\n", err)
+		os.Exit(1)
+	}
+	
+	fmt.Println("--- Migration Report ---")
+	for _, change := range report.Changes {
+		fmt.Printf("- %s\n", change)
+	}
+	fmt.Println("\n--- Canonical STRICT Form ---")
+	fmt.Print(canonical)
+}
+
+func checkCmd() {
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: envllm check <file>")
+		os.Exit(1)
+	}
+	filename := os.Args[2]
+	src, _ := os.ReadFile(filename)
+	
+	// Check starts with parsing in STRICT mode
+	prog, err := envllm.Compile(filename, string(src), envllm.ModeStrict)
+	if err != nil {
+		fmt.Printf("STRICT Parse Error: %v\n", err)
+		os.Exit(1)
+	}
+	
+	tbl, _ := ops.LoadTable("assets/ops.json")
+	lnt := lint.NewLinter(tbl)
+	errs := lnt.Lint(prog.AST)
+	
+	if len(errs) > 0 {
+		fmt.Printf("Found %d canonical errors:\n", len(errs))
+		for _, e := range errs {
+			fmt.Printf("[%s] %s (Loc: %v)\n", e.Code, e.Message, e.Loc)
+			if e.Hint != "" {
+				fmt.Printf("  Hint: %s\n", e.Hint)
+			}
+		}
+		os.Exit(1)
+	}
+	
+	fmt.Println("Canonical check passed (STRICT mode)")
 }

@@ -49,7 +49,7 @@ Use ONLY valid EnvLLM-DSL 0.1.
 	ts := envllm.NewTextStore()
 	ph := ts.Add(h.resolveHandle(req.Source))
 	
-	prog, err := envllm.Compile("subcall.rlm", dslCode)
+	prog, err := envllm.Compile("subcall.rlm", dslCode, envllm.ModeCompat)
 	if err != nil {
 		return runtime.SubcallResponse{}, fmt.Errorf("subcall DSL compilation failed: %v\nCode:\n%s", err, dslCode)
 	}
@@ -118,7 +118,7 @@ func (h *LangChainHost) RunSession(ctx context.Context, task string, ph runtime.
 		dslCode = h.cleanDSL(dslCode)
 		fmt.Printf("--- Turn %d LLM Output ---\n%s\n------------------------\n", i, dslCode)
 
-		prog, err := envllm.Compile(fmt.Sprintf("turn_%d.rlm", i), dslCode)
+		prog, err := envllm.Compile(fmt.Sprintf("turn_%d.rlm", i), dslCode, envllm.ModeCompat)
 		if err != nil {
 			return obs, fmt.Errorf("turn %d: DSL compilation failed: %v\nCode:\n%s", i, err, dslCode)
 		}

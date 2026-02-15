@@ -18,10 +18,18 @@ type Program struct {
 	AST *ast.Program
 }
 
+// ParseMode defines the parser strictness.
+type ParseMode = parse.Mode
+
+const (
+	ModeCompat = parse.ModeCompat
+	ModeStrict = parse.ModeStrict
+)
+
 // Compile compiles source code into a Program.
-func Compile(filename string, src string) (*Program, error) {
+func Compile(filename string, src string, mode ParseMode) (*Program, error) {
 	l := lex.NewLexer(filename, src)
-	p := parse.NewParser(l)
+	p := parse.NewParser(l, mode)
 	astProg, err := p.Parse()
 	if err != nil {
 		return nil, err

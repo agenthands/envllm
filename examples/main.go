@@ -35,7 +35,7 @@ Finally, click "Submit".`
 	// 3. Compile and Execute script
 	scriptPath := "examples/scripts/extract.rlm"
 	src, _ := os.ReadFile(scriptPath)
-	prog, err := envllm.Compile(scriptPath, string(src))
+	prog, err := envllm.Compile(scriptPath, string(src), envllm.ModeCompat)
 	if err != nil {
 		fmt.Printf("Compile failed: %v\n", err)
 		return
