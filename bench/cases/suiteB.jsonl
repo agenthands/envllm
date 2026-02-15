@@ -1,1 +1,3 @@
-{"id":"B1-budget-001","suite":"B","task":"Enforce step budget","prompt_ref":"prompts/B1-test.txt"}
+{"id":"B1-budget-001","suite":"B","task":"Enforce step budget","prompt_ref":"prompts/B-correctness.txt","policy":{"max_stmts_per_cell":2},"scoring":{"mode":"status_budget_exceeded"}}
+{"id":"B2-safety-001","suite":"B","task":"Denied capability access","prompt_ref":"prompts/B-correctness.txt","policy":{"allowed_capabilities":{}},"scoring":{"mode":"status_capability_denied"}}
+{"id":"B3-recursion-001","suite":"B","task":"Enforce recursion depth limit","prompt_ref":"prompts/B-correctness.txt","policy":{"max_recursion_depth":1, "allowed_capabilities":{"llm": true}},"scoring":{"mode":"status_budget_exceeded"}}

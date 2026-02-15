@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/agenthands/envllm/internal/ast"
 	"github.com/agenthands/envllm/internal/ops/capability"
 	"github.com/agenthands/envllm/internal/ops/pure"
 	"github.com/agenthands/envllm/internal/runtime"
@@ -69,10 +70,10 @@ func (r *Registry) registerDefaults() {
 
 		// Validate budgets
 		if s.Policy.MaxSubcalls > 0 && s.SubcallCount >= s.Policy.MaxSubcalls {
-			return runtime.Value{}, fmt.Errorf("budget exceeded: max subcalls reached")
+			return runtime.Value{}, &runtime.BudgetExceededError{Message: "max subcalls reached"}
 		}
 		if s.Policy.MaxRecursionDepth > 0 && s.RecursionDepth+depthCost > s.Policy.MaxRecursionDepth {
-			return runtime.Value{}, fmt.Errorf("budget exceeded: recursion depth limit reached (cost %d)", depthCost)
+			return runtime.Value{}, &runtime.BudgetExceededError{Message: fmt.Sprintf("recursion depth limit reached (cost %d)", depthCost)}
 		}
 
 		// Prepare request
@@ -108,17 +109,39 @@ func (r *Registry) registerDefaults() {
 }
 
 // Dispatch implements runtime.OpDispatcher.
-func (r *Registry) Dispatch(s *runtime.Session, name string, args []runtime.KwArg) (runtime.Value, error) {
-	// 1. Validate signature
+func (r *Registry) Dispatch(s *runtime.Session, name string, args []ast.KwArg) (runtime.Value, error) {
+	// 1. Validate signature and evaluate args
 	var vargs []ValidatedKwArg
 	opDef, ok := r.Table.Ops[name]
 	if !ok {
 		return runtime.Value{}, fmt.Errorf("unknown operation: %s", name)
 	}
 
+	if len(args) != len(opDef.Signature) {
+		return runtime.Value{}, fmt.Errorf("%s: expected %d arguments, got %d", name, len(opDef.Signature), len(args))
+	}
+
 	for i, arg := range args {
 		param := opDef.Signature[i]
-		val := arg.Value
+		
+		var val runtime.Value
+		var err error
+
+		// If it's an enum, we allow raw identifiers as strings
+		if len(param.Enum) > 0 {
+			if name, ok := s.ResolveIdent(arg.Value); ok {
+				val = runtime.Value{Kind: runtime.KindString, V: name}
+			}
+		}
+
+		// If not already resolved as enum identifier, evaluate it
+		if val.Kind == "" {
+			val, err = s.EvalExpr(arg.Value)
+			if err != nil {
+				return runtime.Value{}, err
+			}
+		}
+
 		// Promote STRING to TEXT if needed
 		if param.Type == runtime.KindText && val.Kind == runtime.KindString && s.Stores.Text != nil {
 			h := s.Stores.Text.Add(val.V.(string))
@@ -138,7 +161,7 @@ func (r *Registry) Dispatch(s *runtime.Session, name string, args []runtime.KwAr
 			continue
 		}
 		if s.Policy.AllowedCapabilities == nil || !s.Policy.AllowedCapabilities[cap] {
-			return runtime.Value{}, fmt.Errorf("capability %q denied by policy", cap)
+			return runtime.Value{}, &runtime.CapabilityDeniedError{Message: fmt.Sprintf("capability %q denied by policy", cap)}
 		}
 	}
 

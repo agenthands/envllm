@@ -1,0 +1,4 @@
+This is a dummy prompt for Suite A tests.
+It contains some text to be used in search ops.
+login: admin / password123
+{"status": "active", "count": -10}

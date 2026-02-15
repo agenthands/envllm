@@ -42,8 +42,9 @@ Finally, click "Submit".`
 	}
 
 	opt := envllm.ExecOptions{
-		Host:   host,
-		Policy: runtime.Policy{MaxStmtsPerCell: 50, MaxSubcalls: 5},
+		Host:      host,
+		Policy:    runtime.Policy{MaxStmtsPerCell: 50, MaxSubcalls: 5},
+		TextStore: ts,
 		Inputs: map[string]runtime.Value{
 			"PROMPT": {Kind: runtime.KindText, V: ph},
 		},

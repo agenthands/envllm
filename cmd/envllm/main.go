@@ -74,6 +74,7 @@ func run() {
 			MaxStmtsPerCell: *maxStmts,
 			MaxWallTime:     *timeout,
 		},
+		TextStore: envllm.NewTextStore(),
 	}
 
 	res, err := prog.Execute(context.Background(), opt)

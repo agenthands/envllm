@@ -18,7 +18,8 @@ CELL test:
 	}
 
 	opt := ExecOptions{
-		Policy: runtime.Policy{MaxStmtsPerCell: 10},
+		Policy:    runtime.Policy{MaxStmtsPerCell: 10},
+		TextStore: NewTextStore(),
 	}
 	res, err := prog.Execute(context.Background(), opt)
 	if err != nil {

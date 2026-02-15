@@ -10,6 +10,18 @@ import (
 	"github.com/agenthands/envllm/internal/ast"
 )
 
+type BudgetExceededError struct {
+	Message string
+}
+
+func (e *BudgetExceededError) Error() string { return e.Message }
+
+type CapabilityDeniedError struct {
+	Message string
+}
+
+func (e *CapabilityDeniedError) Error() string { return e.Message }
+
 // TextStore interface.
 type TextStore interface {
 	Add(text string) TextHandle
@@ -19,7 +31,7 @@ type TextStore interface {
 
 // OpDispatcher allows the runtime to execute operations defined elsewhere.
 type OpDispatcher interface {
-	Dispatch(s *Session, name string, args []KwArg) (Value, error)
+	Dispatch(s *Session, name string, args []ast.KwArg) (Value, error)
 }
 
 // Host interface defines the interaction between the runtime and the LLM environment.
@@ -43,14 +55,14 @@ type SubcallResponse struct {
 
 // Policy defines the resource limits for an RLM session.
 type Policy struct {
-	MaxStmtsPerCell     int
-	MaxWallTime         time.Duration
-	MaxTotalBytes       int
-	MaxRecursionDepth   int
-	MaxSubcalls         int
-	AllowedCapabilities map[string]bool
-	AllowedReadPaths    []string
-	AllowedWritePaths   []string
+	MaxStmtsPerCell     int             `json:"max_stmts_per_cell"`
+	MaxWallTime         time.Duration   `json:"max_wall_time"`
+	MaxTotalBytes       int             `json:"max_total_bytes"`
+	MaxRecursionDepth   int             `json:"max_recursion_depth"`
+	MaxSubcalls         int             `json:"max_subcalls"`
+	AllowedCapabilities map[string]bool `json:"allowed_capabilities"`
+	AllowedReadPaths    []string        `json:"allowed_read_paths"`
+	AllowedWritePaths   []string        `json:"allowed_write_paths"`
 }
 
 // Session represents an active RLM session.
@@ -173,10 +185,10 @@ func (s *Session) ExecuteCell(ctx context.Context, cell *ast.Cell) error {
 		
 		// Check budgets
 		if s.Policy.MaxStmtsPerCell > 0 && s.StmtsExecuted > s.Policy.MaxStmtsPerCell {
-			return fmt.Errorf("budget exceeded: max statements per cell (%d)", s.Policy.MaxStmtsPerCell)
+			return &BudgetExceededError{Message: fmt.Sprintf("max statements per cell (%d) exceeded", s.Policy.MaxStmtsPerCell)}
 		}
 		if s.Policy.MaxWallTime > 0 && time.Since(s.StartTime) > s.Policy.MaxWallTime {
-			return fmt.Errorf("budget exceeded: max wall time (%v)", s.Policy.MaxWallTime)
+			return &BudgetExceededError{Message: fmt.Sprintf("max wall time (%v) exceeded", s.Policy.MaxWallTime)}
 		}
 	}
 	
@@ -189,19 +201,19 @@ func (s *Session) ExecuteStmt(ctx context.Context, stmt ast.Stmt) error {
 
 	switch st := stmt.(type) {
 	case *ast.SetFinalStmt:
-		val, err := s.evalExpr(st.Source)
+		val, err := s.EvalExpr(st.Source)
 		if err != nil {
 			return err
 		}
 		s.Final = &val
 	case *ast.PrintStmt:
-		val, err := s.evalExpr(st.Source)
+		val, err := s.EvalExpr(st.Source)
 		if err != nil {
 			return err
 		}
 		fmt.Printf("[PRINT] %v\n", val.V)
 	case *ast.AssertStmt:
-		val, err := s.evalExpr(st.Cond)
+		val, err := s.EvalExpr(st.Cond)
 		if err != nil {
 			return err
 		}
@@ -216,17 +228,7 @@ func (s *Session) ExecuteStmt(ctx context.Context, stmt ast.Stmt) error {
 			return fmt.Errorf("no operation dispatcher configured")
 		}
 		
-		// Evaluate arguments
-		var args []KwArg
-		for _, arg := range st.Args {
-			val, err := s.evalExpr(arg.Value)
-			if err != nil {
-				return err
-			}
-			args = append(args, KwArg{Keyword: arg.Keyword, Value: val})
-		}
-		
-		res, err := s.Dispatcher.Dispatch(s, st.OpName, args)
+		res, err := s.Dispatcher.Dispatch(s, st.OpName, st.Args)
 		if err != nil {
 			return err
 		}
@@ -252,7 +254,7 @@ func (s *Session) ExecuteStmt(ctx context.Context, stmt ast.Stmt) error {
 	return nil
 }
 
-func (s *Session) evalExpr(expr ast.Expr) (Value, error) {
+func (s *Session) EvalExpr(expr ast.Expr) (Value, error) {
 	switch e := expr.(type) {
 	case *ast.IdentExpr:
 		val, ok := s.Env.Get(e.Name)
@@ -271,4 +273,12 @@ func (s *Session) evalExpr(expr ast.Expr) (Value, error) {
 	default:
 		return Value{}, fmt.Errorf("unknown expression type: %T", expr)
 	}
+}
+
+// ResolveIdent returns the name of the identifier if the expression is an IdentExpr.
+func (s *Session) ResolveIdent(expr ast.Expr) (string, bool) {
+	if e, ok := expr.(*ast.IdentExpr); ok {
+		return e.Name, true
+	}
+	return "", false
 }

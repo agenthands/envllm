@@ -2,6 +2,7 @@ package envllm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/agenthands/envllm/internal/ast"
@@ -30,14 +31,23 @@ func Compile(filename string, src string) (*Program, error) {
 
 // ExecOptions defines the options for program execution.
 type ExecOptions struct {
-	Host   runtime.Host
-	Policy runtime.Policy
-	Inputs map[string]runtime.Value
+	Host      runtime.Host
+	Policy    runtime.Policy
+	Inputs    map[string]runtime.Value
+	TextStore runtime.TextStore
+}
+
+// NewTextStore creates a new TextStore.
+func NewTextStore() runtime.TextStore {
+	return store.NewTextStore()
 }
 
 // Execute executes the program using the provided options.
 func (p *Program) Execute(ctx context.Context, opt ExecOptions) (runtime.ExecResult, error) {
-	ts := store.NewTextStore()
+	ts := opt.TextStore
+	if ts == nil {
+		ts = store.NewTextStore()
+	}
 
 	// Load ops table (default path for now)
 	tbl, err := ops.LoadTable("assets/ops.json")
@@ -73,6 +83,14 @@ func (p *Program) Execute(ctx context.Context, opt ExecOptions) (runtime.ExecRes
 	var errs []runtime.Error
 	if lastErr != nil {
 		status = "error"
+		var bErr *runtime.BudgetExceededError
+		var cErr *runtime.CapabilityDeniedError
+		if errors.As(lastErr, &bErr) {
+			status = "budget_exceeded"
+		} else if errors.As(lastErr, &cErr) {
+			status = "capability_denied"
+		}
+		
 		errs = append(errs, runtime.Error{
 			Code:    "EXEC_ERROR",
 			Message: lastErr.Error(),
