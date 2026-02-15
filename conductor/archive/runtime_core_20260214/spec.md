@@ -1,7 +1,7 @@
 # Track Spec: Core Runtime (VM) and TextStore
 
 ## Overview
-Implement the core execution engine for RLM-Go. This includes managing program state (variables), efficient prompt/text storage, and the deterministic interpreter loop.
+Implement the core execution engine for EnvLLM. This includes managing program state (variables), efficient prompt/text storage, and the deterministic interpreter loop.
 
 ## Requirements
 

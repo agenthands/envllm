@@ -1,5 +1,5 @@
 
-# RLM-Go Benchmark Suite Specification
+# EnvLLM Benchmark Suite Specification
 Version: 0.1
 
 This suite proves:

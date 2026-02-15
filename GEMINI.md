@@ -1,7 +1,7 @@
-# RLM-Go (Anka-inspired RLM DSL + Runtime Specification)
+# EnvLLM (Anka-inspired RLM DSL + Runtime Specification)
 
 ## Project Overview
-This project defines the specification for **RLM-Go**, a Go-native Recursive Language Model (RLM) runtime and its associated Domain Specific Language (DSL). It is inspired by Anka's design principles, focusing on a constrained, explicit syntax that minimizes the degrees of freedom for Large Language Models (LLMs) while enabling them to programmatically inspect, decompose, and recursively invoke themselves on data.
+This project defines the specification for **EnvLLM**, a Go-native Recursive Language Model (RLM) runtime and its associated Domain Specific Language (DSL). It is inspired by Anka's design principles, focusing on a constrained, explicit syntax that minimizes the degrees of freedom for Large Language Models (LLMs) while enabling them to programmatically inspect, decompose, and recursively invoke themselves on data.
 
 ### Core Goals
 - **Deterministic Runtime**: A Go-native interpreter/VM with no external database dependencies.
@@ -10,7 +10,7 @@ This project defines the specification for **RLM-Go**, a Go-native Recursive Lan
 - **Safety**: Default-deny capabilities and strict resource budgets (time, steps, memory, recursion depth).
 
 ## Directory Overview
-This repository contains the formal specifications, operation definitions, and data schemas for the RLM-Go system.
+This repository contains the formal specifications, operation definitions, and data schemas for the EnvLLM system.
 
 - **`/assets`**: Contains the core definitions for the DSL's operations and guidelines for LLM interaction.
 - **`/schemas`**: Contains JSON schemas for validating the AST and execution outputs of the runtime.
@@ -27,4 +27,4 @@ This repository contains the formal specifications, operation definitions, and d
 The contents of this directory serve as the source of truth for:
 1.  **Implementing the Runtime**: Providing the EBNF, operation signatures, and expected AST structures for developers building the Go interpreter.
 2.  **Prompt Engineering**: Using the `dialect_card.md` and `ops.json` to guide LLMs in writing valid RLM-DSL programs.
-3.  **Validation**: Using the provided JSON schemas to ensure compatibility between different components of the RLM-Go ecosystem.
+3.  **Validation**: Using the provided JSON schemas to ensure compatibility between different components of the EnvLLM ecosystem.

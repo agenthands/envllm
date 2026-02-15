@@ -30,7 +30,7 @@ func Start(in io.Reader, out io.Writer) {
 	session := runtime.NewSession(runtime.Policy{MaxStmtsPerCell: 100}, ts)
 	session.Dispatcher = reg
 
-	fmt.Fprintln(out, "RLM-Go REPL 0.1")
+	fmt.Fprintln(out, "EnvLLM REPL 0.1")
 	fmt.Fprintln(out, "Type 'exit' to quit.")
 
 	for {

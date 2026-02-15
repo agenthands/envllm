@@ -1,6 +1,6 @@
-# Tech Stack: RLM-Go
+# Tech Stack: EnvLLM
 
-This document defines the official technology stack and engineering standards for the RLM-Go project.
+This document defines the official technology stack and engineering standards for the EnvLLM project.
 
 ## 1. Core Language & Runtime
 - **Primary Language:** Go (Golang)

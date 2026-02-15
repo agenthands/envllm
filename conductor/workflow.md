@@ -1,6 +1,6 @@
-# Project Workflow: RLM-Go
+# Project Workflow: EnvLLM
 
-This document defines the development workflow, testing requirements, and communication standards for the RLM-Go project.
+This document defines the development workflow, testing requirements, and communication standards for the EnvLLM project.
 
 ## 1. Development Cycle
 - **Task-Based Development:** Work is organized into high-level "tracks," which are further decomposed into discrete tasks in a `plan.md`.

@@ -22,5 +22,5 @@
 
 ## Phase 3: Integration
 - [x] **Task: E2E Security & Search Test**
-    - [x] Update `cmd/rlmgo/e2e_test.go` with a test case that mixes capability denials and regex searches.
+    - [x] Update `cmd/envllm/e2e_test.go` with a test case that mixes capability denials and regex searches.
 - [x] **Task: Conductor - User Manual Verification 'Phase 3: Integration' (Protocol in workflow.md)**

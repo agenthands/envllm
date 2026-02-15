@@ -16,7 +16,7 @@ exit
 	Start(in, &out)
 
 	output := out.String()
-	if !strings.Contains(output, "RLM-Go REPL") {
+	if !strings.Contains(output, "EnvLLM REPL") {
 		t.Errorf("expected header, got %q", output)
 	}
 	if !strings.Contains(output, `"status":"ok"`) {

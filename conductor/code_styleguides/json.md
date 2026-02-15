@@ -1,6 +1,6 @@
-# JSON Style & Protocol Guide: RLM-Go
+# JSON Style & Protocol Guide: EnvLLM
 
-For RLM-Go, JSON is a **protocol**, not just a configuration format. These rules are mandatory for all host-generated and runtime-consumed JSON.
+For EnvLLM, JSON is a **protocol**, not just a configuration format. These rules are mandatory for all host-generated and runtime-consumed JSON.
 
 ## JSON Contract Rules
 

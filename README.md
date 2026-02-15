@@ -1,6 +1,6 @@
-# RLM-Go
+# EnvLLM
 
-**RLM-Go** is a Go-native Recursive Language Model (RLM) runtime and DSL, inspired by the RLM research paper and Anka's reliability principles. It enables LLMs to symbolically interact with long prompts stored in an external environment and recursively invoke themselves for complex tasks.
+**EnvLLM** is a Go-native Recursive Language Model (RLM) runtime and DSL, inspired by the RLM research paper and Anka's reliability principles. It enables LLMs to symbolically interact with long prompts stored in an external environment and recursively invoke themselves for complex tasks.
 
 ## Key Features
 - **Deterministic Runtime**: A Go interpreter for pure operations.
@@ -17,17 +17,17 @@ go get github.com/agenthands/envllm
 Execute scripts or start an interactive REPL:
 ```bash
 # Validate a script
-rlmgo validate script.rlm
+envllm validate script.rlm
 
 # Run a script
-rlmgo run script.rlm --timeout 5s
+envllm run script.rlm --timeout 5s
 
 # Start the REPL
-rlmgo repl
+envllm repl
 ```
 
 ## LangChainGo Integration
-RLM-Go is designed to be easily embedded. The `examples/bridge` provides a `Host` implementation using [LangChainGo](https://github.com/tmc/langchaingo).
+EnvLLM is designed to be easily embedded. The `examples/bridge` provides a `Host` implementation using [LangChainGo](https://github.com/tmc/langchaingo).
 
 ```go
 host := &bridge.LangChainHost{

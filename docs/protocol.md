@@ -1,4 +1,4 @@
-# Protocol Specification: RLM-Go
+# Protocol Specification: EnvLLM
 
 This document defines the lifecycle and contract between the RLM Host and the RLM Runtime.
 

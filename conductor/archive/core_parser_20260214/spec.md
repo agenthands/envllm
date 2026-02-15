@@ -1,7 +1,7 @@
 # Track Spec: Core Parser (RLM-DSL 0.1)
 
 ## Overview
-Implement the foundational syntax processing layer for RLM-Go, converting raw DSL text into a validated AST.
+Implement the foundational syntax processing layer for EnvLLM, converting raw DSL text into a validated AST.
 
 ## Requirements
 1. **Lexer (`internal/lex`)**:

@@ -26,6 +26,6 @@
 
 ## Phase 3: Integration & E2E
 - [x] **Task: E2E Recursive Test**
-    - [x] Update `cmd/rlmgo/e2e_test.go` with a recursive program (e.g., a cell that calls itself or another task).
+    - [x] Update `cmd/envllm/e2e_test.go` with a recursive program (e.g., a cell that calls itself or another task).
     - [x] Verify that events and budgets are correctly propagated through the result.
 - [x] **Task: Conductor - User Manual Verification 'Phase 3: Integration & E2E' (Protocol in workflow.md)**

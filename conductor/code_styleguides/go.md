@@ -49,7 +49,7 @@ This document summarizes key rules and best practices from the official "Effecti
 
 ---
 
-## RLM-Go Specific Constraints
+## EnvLLM Specific Constraints
 
 ### 1. No hidden nondeterminism in runtime packages
 Inside `internal/runtime/`, `internal/ops/`, and `internal/validate/`:

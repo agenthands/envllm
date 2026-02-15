@@ -1,5 +1,5 @@
 
-RLM-Go Benchmark Starter
+EnvLLM Benchmark Starter
 
 Contains:
 - BENCH_SPEC.md — benchmark definition

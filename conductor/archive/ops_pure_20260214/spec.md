@@ -1,7 +1,7 @@
 # Track Spec: Ops Registry and Pure Symbolic Operations
 
 ## Overview
-Implement the dynamic operation system for RLM-Go. This includes loading operation definitions from `assets/ops.json`, validating execution signatures at runtime, and implementing the first set of "pure" operations used for prompt analysis and data manipulation.
+Implement the dynamic operation system for EnvLLM. This includes loading operation definitions from `assets/ops.json`, validating execution signatures at runtime, and implementing the first set of "pure" operations used for prompt analysis and data manipulation.
 
 ## Requirements
 

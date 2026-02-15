@@ -1,4 +1,4 @@
-# Markdown Style Guide: RLM-Go
+# Markdown Style Guide: EnvLLM
 
 These rules ensure that project documentation remains consistent and actionable for both human developers and machine interfaces.
 

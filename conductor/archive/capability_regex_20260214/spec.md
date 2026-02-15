@@ -1,7 +1,7 @@
 # Track Spec: Capability Gating and Regex Operations
 
 ## Overview
-Enhance the security and expressive power of RLM-Go. This track implements the capability enforcement layer to protect the host from unauthorized operation calls and adds a high-performance regex-based search operation.
+Enhance the security and expressive power of EnvLLM. This track implements the capability enforcement layer to protect the host from unauthorized operation calls and adds a high-performance regex-based search operation.
 
 ## Requirements
 

@@ -1,16 +1,16 @@
 # Track Spec: CLI and REPL Interface
 
 ## Overview
-Implement the user-facing interface for RLM-Go. This includes a robust CLI for executing files and an interactive REPL for iterative session development.
+Implement the user-facing interface for EnvLLM. This includes a robust CLI for executing files and an interactive REPL for iterative session development.
 
 ## Requirements
 
-1. **Public API (`pkg/rlmgo`)**:
-    - Provide a stable entry point for host applications to use RLM-Go.
+1. **Public API (`pkg/envllm`)**:
+    - Provide a stable entry point for host applications to use EnvLLM.
     - Export `Program`, `Compile`, `Execute`, and `Session` types.
     - Simplify setup by handling default registries and stores.
 
-2. **CLI (`cmd/rlmgo`)**:
+2. **CLI (`cmd/envllm`)**:
     - Support subcommands: `run`, `repl`, `validate`.
     - `run`: Executes a `.rlm` file.
     - `validate`: Checks syntax and operation signatures without executing.
@@ -27,6 +27,6 @@ Implement the user-facing interface for RLM-Go. This includes a robust CLI for e
     - Helpful usage/help text.
 
 ## Success Criteria
-- `rlmgo run script.rlm` correctly executes and outputs the result.
-- `rlmgo repl` allows defining a variable in one turn and using it in the next.
+- `envllm run script.rlm` correctly executes and outputs the result.
+- `envllm repl` allows defining a variable in one turn and using it in the next.
 - Syntax errors in the CLI provide meaningful feedback.

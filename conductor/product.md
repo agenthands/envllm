@@ -2,7 +2,7 @@
 Creating a **Go-native Recursive Language Model (RLM) runtime** and **LLM-friendly DSL** for recursive decomposition and long-context interaction, inspired by the RLM paradigm (prompt-as-environment + recursive self-calls) and Anka’s DSL design principles for reliable LLM code generation (canonical forms, explicit intermediates, step scaffolding, verbose keywords).
 
 # Product Definition
-RLM-Go is an embedded execution environment and constrained DSL that enables an LLM to **symbolically interact with a prompt stored in an external environment** (search/slice/window/parse), and to **recursively invoke itself** via a controlled `SUBCALL`, while keeping execution predictable and resource-bounded. Pure operations are deterministic; LLM subcalls are explicitly budgeted and audited.
+EnvLLM is an embedded execution environment and constrained DSL that enables an LLM to **symbolically interact with a prompt stored in an external environment** (search/slice/window/parse), and to **recursively invoke itself** via a controlled `SUBCALL`, while keeping execution predictable and resource-bounded. Pure operations are deterministic; LLM subcalls are explicitly budgeted and audited.
 
 ## Core Goals
 - **High LLM Legibility:** Strict canonical forms, verbose keywords, explicit intermediate naming (`INTO`), and explicit cell structure to reduce generation errors.

@@ -1,4 +1,4 @@
-# RLM-Go (Anka-inspired) — Go-native Recursive Language Model DSL + Runtime
+# EnvLLM (Anka-inspired) — Go-native Recursive Language Model DSL + Runtime
 Version: 0.1 (spec)
 Date: 2026-02-14
 
@@ -100,8 +100,8 @@ assets/ops.json defines allowed ops, exact keyword signatures + types, capabilit
 - internal/ops: ops.json loader
 - internal/validate: signature/type/capability validation
 - internal/runtime: session, VM, stores, budgets, trace
-- pkg/rlmgo: public API
-- cmd/rlmgo: CLI (validate/run/repl)
+- pkg/envllm: public API
+- cmd/envllm: CLI (validate/run/repl)
 
 ## 4.2 Public API
 ```go

@@ -1,7 +1,7 @@
 # Track Spec: SUBCALL and Host Interface for Controlled Recursion
 
 ## Overview
-Implement the recursive capabilities of RLM-Go. This involves defining how the runtime communicates back to the LLM (the Host) via `SUBCALL` and enforcing strict limits on recursion depth and resource consumption during those calls.
+Implement the recursive capabilities of EnvLLM. This involves defining how the runtime communicates back to the LLM (the Host) via `SUBCALL` and enforcing strict limits on recursion depth and resource consumption during those calls.
 
 ## Requirements
 

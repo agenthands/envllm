@@ -1,7 +1,7 @@
 # Track Spec: File System Capability with Path Whitelisting
 
 ## Overview
-Implement secure file system operations for RLM-Go. This track adds the ability for the model to read and write files, but only within explicitly permitted directory paths defined in the session policy.
+Implement secure file system operations for EnvLLM. This track adds the ability for the model to read and write files, but only within explicitly permitted directory paths defined in the session policy.
 
 ## Requirements
 

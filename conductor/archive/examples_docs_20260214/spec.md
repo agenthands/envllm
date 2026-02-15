@@ -1,7 +1,7 @@
 # Track Spec: Example Suite using LangChainGo and Comprehensive Documentation
 
 ## Overview
-Demonstrate the practical utility of RLM-Go by building a bridge to the `langchaingo` ecosystem. Create real-world examples showing how RLM-DSL scripts can be executed by a Go host that uses LangChainGo to interact with real LLM providers.
+Demonstrate the practical utility of EnvLLM by building a bridge to the `langchaingo` ecosystem. Create real-world examples showing how RLM-DSL scripts can be executed by a Go host that uses LangChainGo to interact with real LLM providers.
 
 ## Requirements
 
