@@ -17,12 +17,16 @@ func TestExecResult_Schema(t *testing.T) {
 
 	res := ExecResult{
 		SchemaVersion: "obs-0.1",
-		Status:        "ok",
-		VarsDelta:     make(map[string]Value),
-		Budgets:       make(map[string]BudgetStats),
-		Events:        []Event{},
-		Errors:        []Error{},
-		Truncated:     TruncationFlags{},
+		Cell: CellInfo{
+			Name:  "test",
+			Index: 0,
+		},
+		Status:    "ok",
+		VarsDelta: make(map[string]Value),
+		Budgets:   make(map[string]BudgetStats),
+		Events:    []Event{},
+		Errors:    []Error{},
+		Truncated: TruncationFlags{},
 	}
 
 	data, err := json.Marshal(res)

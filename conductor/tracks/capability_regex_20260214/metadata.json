@@ -1,8 +1,0 @@
-{
-  "track_id": "capability_regex_20260214",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-14T18:00:00Z",
-  "updated_at": "2026-02-14T18:00:00Z",
-  "description": "Implement Capability Gating and Regex Operations"
-}

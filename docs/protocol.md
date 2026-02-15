@@ -13,6 +13,7 @@ This document defines the lifecycle and contract between the RLM Host and the RL
 
 ## 2. Observation Schema Rules
 - **Constant-size Metadata:** Observations should not grow linearly with the prompt size. Use handles and previews.
+- **Identity:** Every observation MUST include a `cell` object identifying the executed cell by `name` and `index`.
 - **Delta-only:** `vars_delta` should only contain variables from the current execution turn.
 - **Truncation Flags:** Always set boolean flags if any content (previews, prints) was truncated.
 

@@ -68,6 +68,10 @@ type Session struct {
 	RecursionDepth int
 	SubcallCount   int
 
+	// Current execution context
+	CurrentCell string
+	CellIndex   int
+
 	// Result tracking
 	Events    []Event
 	VarsDelta map[string]Value
@@ -130,11 +134,15 @@ func (s *Session) ValidatePath(path string, write bool) error {
 func (s *Session) GenerateResult(status string, errors []Error) ExecResult {
 	res := ExecResult{
 		SchemaVersion: "obs-0.1",
-		Status:        status,
-		VarsDelta:     s.VarsDelta,
-		Final:         s.Final,
-		Events:        s.Events,
-		Errors:        errors,
+		Cell: CellInfo{
+			Name:  s.CurrentCell,
+			Index: s.CellIndex,
+		},
+		Status:    status,
+		VarsDelta: s.VarsDelta,
+		Final:     s.Final,
+		Events:    s.Events,
+		Errors:    errors,
 	}
 	
 	// Add budgets
@@ -156,6 +164,7 @@ func (s *Session) GenerateResult(status string, errors []Error) ExecResult {
 // ExecuteCell runs all statements in a cell.
 func (s *Session) ExecuteCell(ctx context.Context, cell *ast.Cell) error {
 	s.StartTime = time.Now()
+	s.CurrentCell = cell.Name
 	
 	for _, stmt := range cell.Stmts {
 		if err := s.ExecuteStmt(ctx, stmt); err != nil {

@@ -31,6 +31,14 @@ func TestValueJSON(t *testing.T) {
 			val:  Value{Kind: KindText, V: TextHandle{ID: "t1", Bytes: 100}},
 			want: `{"kind":"TEXT","v":{"id":"t1","bytes":100}}`,
 		},
+		{
+			name: "LIST",
+			val: Value{Kind: KindList, V: []Value{
+				{Kind: KindInt, V: 1},
+				{Kind: KindInt, V: 2},
+			}},
+			want: `{"kind":"LIST","v":[{"kind":"INT","v":1},{"kind":"INT","v":2}]}`,
+		},
 	}
 
 	for _, tt := range tests {

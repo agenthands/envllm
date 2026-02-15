@@ -1,6 +1,8 @@
 package ast
 
-import "github.com/agenthands/rlm-go/internal/lex"
+import (
+	"github.com/agenthands/rlm-go/internal/lex"
+)
 
 // Node is the interface for all AST nodes.
 type Node interface {

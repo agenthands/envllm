@@ -23,7 +23,25 @@ An **RLM Session** runs a loop:
 1) Host provides the model constant-size metadata about the prompt/environment + brief observation summary.
 2) Model emits a DSL cell (code).
 3) Host validates, executes it inside a persistent environment (variables + stores).
-4) Host returns a compact observation; loop continues until `FINAL` is set or a budget is exhausted.
+4) Host returns a compact observation (JSON); loop continues until `FINAL` is set or a budget is exhausted.
+
+### 1.1 Observation Schema
+The observation returned by the host MUST be a single JSON object:
+```json
+{
+  "schema_version": "obs-0.1",
+  "cell": { "name": "cell_name", "index": 0 },
+  "status": "ok | error | budget_exceeded | capability_denied",
+  "vars_delta": { "var_name": { "kind": "TYPE", "v": value } },
+  "result": null,
+  "final": null,
+  "budgets": { "stmts": { "used": 1, "limit": 10 }, ... },
+  "events": [],
+  "errors": [],
+  "truncated": { "obs": false, "prints": false, "previews": false }
+}
+```
+All `vars_delta` values use a tagged encoding (e.g., `{ "kind": "INT", "v": 42 }`). `TEXT` values are handle-based.
 
 ---
 

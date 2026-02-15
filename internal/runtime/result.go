@@ -7,6 +7,7 @@ import (
 // ExecResult represents the result of executing an RLM program or cell.
 type ExecResult struct {
 	SchemaVersion string                 `json:"schema_version"`
+	Cell          CellInfo               `json:"cell"`
 	Status        string                 `json:"status"`
 	VarsDelta     map[string]Value       `json:"vars_delta"`
 	Result        *Value                 `json:"result,omitempty"`
@@ -15,6 +16,11 @@ type ExecResult struct {
 	Events        []Event                `json:"events"`
 	Errors        []Error                `json:"errors"`
 	Truncated     TruncationFlags        `json:"truncated"`
+}
+
+type CellInfo struct {
+	Name  string `json:"name"`
+	Index int    `json:"index"`
 }
 
 type BudgetStats struct {

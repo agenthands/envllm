@@ -2,33 +2,80 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "RLMDSL AST",
   "type": "object",
-  "required": [
-    "version",
-    "cells"
-  ],
+  "required": ["version", "cells"],
   "properties": {
-    "version": {
-      "type": "string"
-    },
+    "version": { "type": "string" },
     "cells": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": [
-          "name",
-          "stmts"
-        ],
+        "required": ["name", "stmts"],
         "properties": {
-          "name": {
-            "type": "string"
-          },
+          "name": { "type": "string" },
           "stmts": {
             "type": "array",
             "items": {
-              "type": "object"
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": ["type", "op_name", "args", "into"],
+                  "properties": {
+                    "type": { "const": "op" },
+                    "op_name": { "type": "string" },
+                    "args": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["kw", "value"],
+                        "properties": {
+                          "kw": { "type": "string" },
+                          "value": { "$ref": "#/$defs/expr" }
+                        }
+                      }
+                    },
+                    "into": { "type": "string" }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": ["type", "source"],
+                  "properties": {
+                    "type": { "const": "set_final" },
+                    "source": { "$ref": "#/$defs/expr" }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": ["type", "cond", "message"],
+                  "properties": {
+                    "type": { "const": "assert" },
+                    "cond": { "$ref": "#/$defs/expr" },
+                    "message": { "type": "string" }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": ["type", "source"],
+                  "properties": {
+                    "type": { "const": "print" },
+                    "source": { "$ref": "#/$defs/expr" }
+                  }
+                }
+              ]
             }
           }
         }
+      }
+    }
+  },
+  "$defs": {
+    "expr": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["IDENT", "STRING", "INT", "BOOL"] },
+        "name": { "type": "string" },
+        "value": {}
       }
     }
   }
