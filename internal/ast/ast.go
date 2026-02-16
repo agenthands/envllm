@@ -151,3 +151,16 @@ type PrintStmt struct {
 
 func (s *PrintStmt) Pos() lex.Loc { return s.Loc }
 func (s *PrintStmt) stmtNode()   {}
+
+// ForEachStmt represents the FOR_EACH loop.
+type ForEachStmt struct {
+	Loc        lex.Loc `json:"-"`
+	Type       string  `json:"type"` // "for_each"
+	Iterator   string  `json:"iterator"`
+	Collection string  `json:"collection"`
+	Limit      int     `json:"limit"`
+	Body       []Stmt  `json:"body"`
+}
+
+func (s *ForEachStmt) Pos() lex.Loc { return s.Loc }
+func (s *ForEachStmt) stmtNode()   {}

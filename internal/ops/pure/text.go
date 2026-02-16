@@ -13,11 +13,12 @@ func Stats(s *runtime.Session, source runtime.Value) (runtime.Value, error) {
 	h := source.V.(runtime.TextHandle)
 	text, _ := s.Stores.Text.Get(h)
 
+	// VmStats schema: bytes: INT, lines: INT
 	res := map[string]interface{}{
 		"bytes": len(text),
 		"lines": len(strings.Split(text, "\n")),
 	}
-	return runtime.Value{Kind: runtime.KindJSON, V: res}, nil
+	return runtime.Value{Kind: runtime.KindStruct, V: res}, nil
 }
 
 // FindText implements the FIND_TEXT operation.

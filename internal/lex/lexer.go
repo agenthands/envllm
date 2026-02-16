@@ -162,6 +162,12 @@ func lookupIdent(ident string) Type {
 		return TypeREQUIRES
 	case "capability":
 		return TypeCapability
+	case "FOR_EACH":
+		return TypeFOR_EACH
+	case "IN":
+		return TypeIN
+	case "LIMIT":
+		return TypeLIMIT
 	case "true", "false":
 		return TypeBool
 	case "null":

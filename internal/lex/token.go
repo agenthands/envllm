@@ -18,6 +18,9 @@ const (
 	TypePRINT
 	TypeREQUIRES
 	TypeCapability
+	TypeFOR_EACH
+	TypeIN
+	TypeLIMIT
 
 	// Literals
 	TypeIdent

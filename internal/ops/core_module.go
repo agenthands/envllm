@@ -15,7 +15,8 @@ func (m *CoreModule) ID() string { return "core" }
 
 func (m *CoreModule) Operations() []Op {
 	return []Op{
-		{Name: "STATS", Capabilities: []string{"pure"}, ResultType: runtime.KindJSON, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindText}}, Into: true},
+		{Name: "STATS", Capabilities: []string{"pure"}, ResultType: runtime.KindStruct, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindText}}, Into: true},
+		{Name: "GET_FIELD", Capabilities: []string{"pure"}, ResultType: runtime.KindJSON, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindStruct}, {Kw: "FIELD", Type: runtime.KindText}}, Into: true},
 		{Name: "FIND_TEXT", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{
 			{Kw: "SOURCE", Type: runtime.KindText},
 			{Kw: "NEEDLE", Type: runtime.KindText},
@@ -63,6 +64,12 @@ func (m *CoreModule) Handlers() map[string]OpImplementation {
 	return map[string]OpImplementation{
 		"STATS": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			return pure.Stats(s, args[0])
+		},
+		"GET_FIELD": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			// Extract field name from TEXT handle
+			h := args[1].V.(runtime.TextHandle)
+			field, _ := s.Stores.Text.Get(h)
+			return pure.GetField(s, args[0], field)
 		},
 		"FIND_TEXT": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			mode := "FIRST"

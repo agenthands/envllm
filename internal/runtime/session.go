@@ -213,6 +213,44 @@ func (s *Session) ExecuteStmt(ctx context.Context, stmt ast.Stmt) error {
 			return err
 		}
 		fmt.Printf("[PRINT] %v\n", val.V)
+	case *ast.ForEachStmt:
+		collVal, ok := s.Env.Get(st.Collection)
+		if !ok {
+			return fmt.Errorf("undefined collection: %s", st.Collection)
+		}
+		if collVal.Kind != KindRows {
+			return fmt.Errorf("FOR_EACH expects ROWS, got %s", collVal.Kind)
+		}
+		
+		rows := collVal.V.([]map[string]interface{})
+		limit := st.Limit
+		if limit > len(rows) { limit = len(rows) }
+		
+		for i := 0; i < limit; i++ {
+			// Define iterator variable (shadowing allowed inside loop for iterator only?)
+			// Spec says: Loop variable is read-only.
+			// We need a scoped environment or just define/undefine.
+			// EnvLLM v0.1 has flat scope. v0.2.2 spec says "No nested FOR_EACH".
+			// Let's implement scope push/pop for loop.
+			
+			// Actually, just define it. If it exists, error (NO_REUSE).
+			// But it needs to exist for the loop.
+			// Let's defer strict scope to Linter. Runtime just overwrites or defines.
+			
+			// Create a child scope/env? No, Env is flat map.
+			// Hack: define, execute, undefine? Or allow reassignment for iterator?
+			// The Linter will block reassignment. 
+			// We should probably allow the iterator to be 'rebound' each iteration in the runtime.
+			
+			rowVal := Value{Kind: KindStruct, V: rows[i]}
+			s.Env.vars[st.Iterator] = rowVal // Direct set to bypass single-assign check for loop
+			
+			for _, bs := range st.Body {
+				if err := s.ExecuteStmt(ctx, bs); err != nil {
+					return err
+				}
+			}
+		}
 	case *ast.AssertStmt:
 		val, err := s.EvalExpr(st.Cond)
 		if err != nil {

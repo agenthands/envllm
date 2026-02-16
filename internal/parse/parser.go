@@ -150,6 +150,8 @@ func (p *Parser) parseStatement() (ast.Stmt, error) {
 		return p.parseAssert()
 	case lex.TypePRINT:
 		return p.parsePrint()
+	case lex.TypeFOR_EACH:
+		return p.parseForEach()
 	case lex.TypeIdent:
 		return p.parseOpStatement()
 	default:
@@ -290,6 +292,76 @@ func (p *Parser) parsePrint() (*ast.PrintStmt, error) {
 	if err := p.expectNewline(); err != nil {
 		return nil, err
 	}
+	return stmt, nil
+}
+
+func (p *Parser) parseForEach() (*ast.ForEachStmt, error) {
+	stmt := &ast.ForEachStmt{Loc: p.curToken.Loc, Type: "for_each"}
+	p.nextToken() // FOR_EACH
+
+	if p.curToken.Type != lex.TypeIdent {
+		return nil, fmt.Errorf("%s: expected iterator identifier", p.curToken.Loc)
+	}
+	stmt.Iterator = p.curToken.Value
+	p.nextToken()
+
+	if p.curToken.Type != lex.TypeIN {
+		return nil, fmt.Errorf("%s: expected IN", p.curToken.Loc)
+	}
+	p.nextToken()
+
+	if p.curToken.Type != lex.TypeIdent {
+		return nil, fmt.Errorf("%s: expected collection identifier", p.curToken.Loc)
+	}
+	stmt.Collection = p.curToken.Value
+	p.nextToken()
+
+	if p.curToken.Type != lex.TypeLIMIT {
+		return nil, fmt.Errorf("%s: expected LIMIT", p.curToken.Loc)
+	}
+	p.nextToken()
+
+	if p.curToken.Type != lex.TypeInt {
+		return nil, fmt.Errorf("%s: expected integer limit", p.curToken.Loc)
+	}
+	limit, _ := strconv.Atoi(p.curToken.Value)
+	stmt.Limit = limit
+	p.nextToken()
+
+	if p.curToken.Type != lex.TypeColon {
+		return nil, fmt.Errorf("%s: expected ':' after limit", p.curToken.Loc)
+	}
+	p.nextToken()
+
+	if err := p.expectNewline(); err != nil {
+		return nil, err
+	}
+
+	// Parse body
+	for p.curToken.Type != lex.TypeEOF && p.curToken.Type != lex.TypeCELL {
+		if p.curToken.Type == lex.TypeNewline {
+			p.nextToken()
+			continue
+		}
+		
+		// Enforce 4-space indentation for loop body (2 for cell + 2 for loop)
+		if p.mode == ModeStrict && p.curToken.Loc.Col != 5 {
+			return nil, fmt.Errorf("%s: expected exactly 4 spaces of indentation for loop body", p.curToken.Loc)
+		}
+		// In COMPAT mode or if indentation decreases (end of loop), we need logic.
+		// EBNF says { stmt_line }. Stmt line is indent + stmt.
+		// If indentation < 4 (e.g. 2 or 0), it's end of loop.
+		if p.curToken.Loc.Col < 5 {
+			break
+		}
+
+		bodyStmt, err := p.parseStatement()
+		if err != nil {
+			return nil, err
+		}
+		stmt.Body = append(stmt.Body, bodyStmt)
+	}
+
 	return stmt, nil
 }
 

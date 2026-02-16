@@ -60,6 +60,20 @@
                     "type": { "const": "print" },
                     "source": { "$ref": "#/$defs/expr" }
                   }
+                },
+                {
+                  "type": "object",
+                  "required": ["type", "iterator", "collection", "limit", "body"],
+                  "properties": {
+                    "type": { "const": "for_each" },
+                    "iterator": { "type": "string" },
+                    "collection": { "type": "string" },
+                    "limit": { "type": "integer" },
+                    "body": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
                 }
               ]
             }

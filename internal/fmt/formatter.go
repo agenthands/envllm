@@ -72,6 +72,19 @@ func formatStmt(sb *strings.Builder, stmt ast.Stmt) {
 	case *ast.PrintStmt:
 		sb.WriteString("PRINT SOURCE ")
 		formatExpr(sb, s.Source)
+	case *ast.ForEachStmt:
+		sb.WriteString("FOR_EACH ")
+		sb.WriteString(s.Iterator)
+		sb.WriteString(" IN ")
+		sb.WriteString(s.Collection)
+		sb.WriteString(" LIMIT ")
+		sb.WriteString(fmt.Sprintf("%d", s.Limit))
+		sb.WriteString(":\n")
+		for _, bs := range s.Body {
+			sb.WriteString("    ") // 4 spaces
+			formatStmt(sb, bs)
+			sb.WriteString("\n")
+		}
 	}
 }
 
