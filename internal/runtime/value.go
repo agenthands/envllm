@@ -17,6 +17,7 @@ const (
 	KindString Kind = "STRING"
 	KindList   Kind = "LIST"
 	KindNull   Kind = "NULL"
+	KindOffset Kind = "OFFSET"
 )
 
 // Value represents a typed value in the RLM runtime.
@@ -112,6 +113,12 @@ func (v *Value) UnmarshalJSON(data []byte) error {
 		v.V = l
 	case KindNull:
 		v.V = nil
+	case KindOffset:
+		var i int
+		if err := json.Unmarshal(raw.V, &i); err != nil {
+			return err
+		}
+		v.V = i
 	default:
 		return fmt.Errorf("unknown value kind: %s", v.Kind)
 	}

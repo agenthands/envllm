@@ -41,7 +41,7 @@ func FindText(s *runtime.Session, source runtime.Value, needle runtime.Value, mo
 		pos = strings.LastIndex(searchText, searchNeedle)
 	}
 
-	return runtime.Value{Kind: runtime.KindInt, V: pos}, nil
+	return runtime.Value{Kind: runtime.KindOffset, V: pos}, nil
 }
 
 // WindowText implements the WINDOW_TEXT operation.
@@ -100,17 +100,17 @@ func FindRegex(s *runtime.Session, source runtime.Value, pattern runtime.Value, 
 // GetSpanStart implements the GET_SPAN_START operation.
 func GetSpanStart(s *runtime.Session, source runtime.Value) (runtime.Value, error) {
 	span := source.V.(runtime.Span)
-	return runtime.Value{Kind: runtime.KindInt, V: span.Start}, nil
+	return runtime.Value{Kind: runtime.KindOffset, V: span.Start}, nil
 }
 
 // GetSpanEnd implements the GET_SPAN_END operation.
 func GetSpanEnd(s *runtime.Session, source runtime.Value) (runtime.Value, error) {
 	span := source.V.(runtime.Span)
-	return runtime.Value{Kind: runtime.KindInt, V: span.End}, nil
+	return runtime.Value{Kind: runtime.KindOffset, V: span.End}, nil
 }
 
-// Concat implements the CONCAT operation.
-func Concat(s *runtime.Session, a, b runtime.Value) (runtime.Value, error) {
+// ConcatText implements the CONCAT_TEXT operation.
+func ConcatText(s *runtime.Session, a, b runtime.Value) (runtime.Value, error) {
 	ha := a.V.(runtime.TextHandle)
 	hb := b.V.(runtime.TextHandle)
 	
@@ -118,4 +118,23 @@ func Concat(s *runtime.Session, a, b runtime.Value) (runtime.Value, error) {
 	tb, _ := s.Stores.Text.Get(hb)
 	
 	return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(ta + tb)}, nil
+}
+
+// ToText implements the TO_TEXT operation.
+func ToText(s *runtime.Session, val runtime.Value) (runtime.Value, error) {
+	str := fmt.Sprintf("%v", val.V)
+	if val.Kind == runtime.KindNull {
+		str = "null"
+	}
+	return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(str)}, nil
+}
+
+// Offset implements the OFFSET constructor.
+func Offset(s *runtime.Session, val int) (runtime.Value, error) {
+	return runtime.Value{Kind: runtime.KindOffset, V: val}, nil
+}
+
+// Span implements the SPAN constructor.
+func Span(s *runtime.Session, start, end int) (runtime.Value, error) {
+	return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: start, End: end}}, nil
 }

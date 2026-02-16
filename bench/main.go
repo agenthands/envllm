@@ -22,7 +22,7 @@ func (m *MockModel) Complete(ctx context.Context, task, prompt string) (string, 
 	case "Parse basic cell":
 		return "CELL test:\n  PRINT SOURCE \"hello\"\n  SET_FINAL SOURCE true\n", nil
 	case "Validate strict 2-space indentation":
-		return "CELL test:\nPRINT SOURCE \"wrong\"\n", nil 
+		return "CELL test:\nPRINT SOURCE \"wrong\" INTO out: TEXT\n", nil 
 	case "Handle null and negative numbers":
 		return `CELL test:
   PRINT SOURCE null
@@ -35,17 +35,19 @@ func (m *MockModel) Complete(ctx context.Context, task, prompt string) (string, 
 	case "Enforce step budget":
 		return "CELL test:\n  PRINT SOURCE 1\n  PRINT SOURCE 2\n  PRINT SOURCE 3\n", nil
 	case "Denied capability access":
-		return "CELL test:\n  READ_FILE PATH \"/etc/passwd\" INTO out\n  SET_FINAL SOURCE out\n", nil
+		return "REQUIRES capability=\"fs_read\"\nCELL test:\n  READ_FILE PATH \"/etc/passwd\" INTO out: TEXT\n  SET_FINAL SOURCE out\n", nil
 	case "Enforce recursion depth limit":
-		return "CELL test:\n  SUBCALL SOURCE PROMPT TASK \"recursive\" DEPTH_COST 10 INTO out\n  SET_FINAL SOURCE out\n", nil
+		return "REQUIRES capability=\"llm\"\nCELL test:\n  SUBCALL SOURCE PROMPT TASK \"recursive\" DEPTH_COST 10 INTO out: JSON\n  SET_FINAL SOURCE out\n", nil
+	case "Mandatory REQUIRES declaration":
+		return "CELL test:\n  READ_FILE PATH \"foo\" INTO out: TEXT\n  SET_FINAL SOURCE out\n", nil
 	case "Extract credentials JSON":
-		return "CELL test:\n  JSON_PARSE SOURCE \"{\\\"user\\\": \\\"admin\\\", \\\"pass\\\": \\\"hunter2\\\"}\" INTO out\n  SET_FINAL SOURCE out\n", nil
+		return "CELL test:\n  JSON_PARSE SOURCE \"{\\\"user\\\": \\\"admin\\\", \\\"pass\\\": \\\"hunter2\\\"}\" INTO out: JSON\n  SET_FINAL SOURCE out\n", nil
 	case "Find error offset":
-		return "CELL test:\n  FIND_TEXT SOURCE PROMPT NEEDLE \"ERROR\" MODE FIRST IGNORE_CASE false INTO pos\n  ASSERT COND true MESSAGE \"Found error\"\n  SET_FINAL SOURCE pos\n", nil
+		return "CELL test:\n  FIND_TEXT SOURCE PROMPT NEEDLE \"ERROR\" MODE FIRST IGNORE_CASE false INTO pos: OFFSET\n  ASSERT COND true MESSAGE \"Found error\"\n  SET_FINAL SOURCE pos\n", nil
 	case "Extract config JSON":
-		return "CELL test:\n  FIND_REGEX SOURCE PROMPT PATTERN \"\\\\{.*\\\\}\" MODE FIRST INTO span\n  GET_SPAN_START SOURCE span INTO start\n  GET_SPAN_END SOURCE span INTO end\n  SLICE_TEXT SOURCE PROMPT START start END end INTO snippet\n  JSON_PARSE SOURCE snippet INTO cfg\n  SET_FINAL SOURCE cfg\n", nil
+		return "CELL test:\n  FIND_REGEX SOURCE PROMPT PATTERN \"\\\\{.*\\\\}\" MODE FIRST INTO span: SPAN\n  GET_SPAN_START SOURCE span INTO start: OFFSET\n  GET_SPAN_END SOURCE span INTO end: OFFSET\n  SLICE_TEXT SOURCE PROMPT START start END end INTO snippet: TEXT\n  JSON_PARSE SOURCE snippet INTO cfg: JSON\n  SET_FINAL SOURCE cfg\n", nil
 	case "Recursive summary of history":
-		return "CELL test:\n  FIND_TEXT SOURCE PROMPT NEEDLE \"Chapter 1\" MODE FIRST IGNORE_CASE true INTO p1\n  WINDOW_TEXT SOURCE PROMPT CENTER p1 RADIUS 100 INTO s1\n  SUBCALL SOURCE s1 TASK \"Summarize chapter 1\" DEPTH_COST 1 INTO r1\n  SET_FINAL SOURCE r1\n", nil
+		return "REQUIRES capability=\"llm\"\nCELL test:\n  FIND_TEXT SOURCE PROMPT NEEDLE \"Chapter 1\" MODE FIRST IGNORE_CASE true INTO p1: OFFSET\n  WINDOW_TEXT SOURCE PROMPT CENTER p1 RADIUS 100 INTO s1: TEXT\n  SUBCALL SOURCE s1 TASK \"Summarize chapter 1\" DEPTH_COST 1 INTO r1: JSON\n  SET_FINAL SOURCE r1\n", nil
 	default:
 		return "CELL default:\n  SET_FINAL SOURCE null\n", nil
 	}
@@ -91,6 +93,7 @@ func main() {
 			fmt.Println("Error: GEMINI_API_KEY or GOOGLE_API_KEY not set")
 			os.Exit(1)
 		}
+		// Fallback to default (likely gemini-pro or gemini-1.5-flash)
 		m, err := googleai.New(ctx, googleai.WithAPIKey(apiKey))
 		if err != nil {
 			fmt.Printf("Error creating model: %v\n", err)
@@ -98,7 +101,7 @@ func main() {
 		}
 		card, _ := os.ReadFile("assets/dialect_card.md")
 		model = &RealLLMModel{model: m, dialectCard: string(card)}
-		fmt.Println("Mode: Real LLM (Gemini Flash)")
+		fmt.Println("Mode: Real LLM (Default)")
 	} else {
 		model = &MockModel{}
 		fmt.Println("Mode: Mock Model")
@@ -141,6 +144,9 @@ func runSuite(ctx context.Context, path string, m runner.Model, baseDir string) 
 			status = "FAILED"
 		}
 		fmt.Printf("  [%s] Case %s: %s (Status: %s)\n", status, c.ID, c.Task, res.Status)
+		if !res.Passed && res.Code != "" {
+			fmt.Printf("    Generated Code:\n---\n%s\n---\n", res.Code)
+		}
 		if res.Error != "" {
 			fmt.Printf("    Error: %s\n", res.Error)
 		}

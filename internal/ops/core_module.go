@@ -16,7 +16,7 @@ func (m *CoreModule) ID() string { return "core" }
 func (m *CoreModule) Operations() []Op {
 	return []Op{
 		{Name: "STATS", Capabilities: []string{"pure"}, ResultType: runtime.KindJSON, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindText}}, Into: true},
-		{Name: "FIND_TEXT", Capabilities: []string{"pure"}, ResultType: runtime.KindInt, Signature: []Param{
+		{Name: "FIND_TEXT", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{
 			{Kw: "SOURCE", Type: runtime.KindText},
 			{Kw: "NEEDLE", Type: runtime.KindText},
 			{Kw: "MODE", Enum: []string{"FIRST", "LAST"}},
@@ -24,13 +24,13 @@ func (m *CoreModule) Operations() []Op {
 		}, Into: true},
 		{Name: "WINDOW_TEXT", Capabilities: []string{"pure"}, ResultType: runtime.KindText, Signature: []Param{
 			{Kw: "SOURCE", Type: runtime.KindText},
-			{Kw: "CENTER", Type: runtime.KindInt},
+			{Kw: "CENTER", Type: runtime.KindOffset},
 			{Kw: "RADIUS", Type: runtime.KindInt},
 		}, Into: true},
 		{Name: "SLICE_TEXT", Capabilities: []string{"pure"}, ResultType: runtime.KindText, Signature: []Param{
 			{Kw: "SOURCE", Type: runtime.KindText},
-			{Kw: "START", Type: runtime.KindInt},
-			{Kw: "END", Type: runtime.KindInt},
+			{Kw: "START", Type: runtime.KindOffset},
+			{Kw: "END", Type: runtime.KindOffset},
 		}, Into: true},
 		{Name: "FIND_REGEX", Capabilities: []string{"pure"}, ResultType: runtime.KindSpan, Signature: []Param{
 			{Kw: "SOURCE", Type: runtime.KindText},
@@ -42,9 +42,12 @@ func (m *CoreModule) Operations() []Op {
 			{Kw: "SOURCE", Type: runtime.KindJSON},
 			{Kw: "PATH", Type: runtime.KindText},
 		}, Into: true},
-		{Name: "GET_SPAN_START", Capabilities: []string{"pure"}, ResultType: runtime.KindInt, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindSpan}}, Into: true},
-		{Name: "GET_SPAN_END", Capabilities: []string{"pure"}, ResultType: runtime.KindInt, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindSpan}}, Into: true},
-		{Name: "CONCAT", Capabilities: []string{"pure"}, ResultType: runtime.KindText, Signature: []Param{{Kw: "A", Type: runtime.KindText}, {Kw: "B", Type: runtime.KindText}}, Into: true},
+		{Name: "GET_SPAN_START", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindSpan}}, Into: true},
+		{Name: "GET_SPAN_END", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindSpan}}, Into: true},
+		{Name: "CONCAT_TEXT", Capabilities: []string{"pure"}, ResultType: runtime.KindText, Signature: []Param{{Kw: "A", Type: runtime.KindText}, {Kw: "B", Type: runtime.KindText}}, Into: true},
+		{Name: "TO_TEXT", Capabilities: []string{"pure"}, ResultType: runtime.KindText, Signature: []Param{{Kw: "VALUE", Type: ""}}, Into: true},
+		{Name: "OFFSET", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{{Kw: "VALUE", Type: runtime.KindInt}}, Into: true},
+		{Name: "SPAN", Capabilities: []string{"pure"}, ResultType: runtime.KindSpan, Signature: []Param{{Kw: "START", Type: runtime.KindOffset}, {Kw: "END", Type: runtime.KindOffset}}, Into: true},
 		{Name: "SUBCALL", Capabilities: []string{"llm"}, ResultType: runtime.KindJSON, Signature: []Param{
 			{Kw: "SOURCE", Type: runtime.KindText},
 			{Kw: "TASK", Type: runtime.KindText},
@@ -90,8 +93,17 @@ func (m *CoreModule) Handlers() map[string]OpImplementation {
 		"GET_SPAN_END": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			return pure.GetSpanEnd(s, args[0])
 		},
-		"CONCAT": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
-			return pure.Concat(s, args[0], args[1])
+		"CONCAT_TEXT": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.ConcatText(s, args[0], args[1])
+		},
+		"TO_TEXT": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.ToText(s, args[0])
+		},
+		"OFFSET": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.Offset(s, args[0].V.(int))
+		},
+		"SPAN": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.Span(s, args[0].V.(int), args[1].V.(int))
 		},
 		"SUBCALL": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			if s.Host == nil { return runtime.Value{}, fmt.Errorf("SUBCALL failed: no host configured") }

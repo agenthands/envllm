@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"reflect"
 
+	"github.com/agenthands/envllm/internal/lint"
+	"github.com/agenthands/envllm/internal/ops"
 	"github.com/agenthands/envllm/internal/runtime"
 	"github.com/agenthands/envllm/pkg/envllm"
 )
@@ -37,7 +39,7 @@ func (h *dummyHost) Subcall(ctx context.Context, req runtime.SubcallRequest) (ru
 }
 
 type ScoringConfig struct {
-	Mode string `json:"mode"` // "status_ok", "status_budget_exceeded", "status_capability_denied", "json_semantic"
+	Mode string `json:"mode"` // "status_ok", "status_budget_exceeded", "status_capability_denied", "json_semantic", "status_compile_error"
 }
 
 type Result struct {
@@ -47,6 +49,7 @@ type Result struct {
 	Output   runtime.ExecResult `json:"output"`
 	Error    string             `json:"error,omitempty"`
 	Mismatch string             `json:"mismatch,omitempty"`
+	Code     string             `json:"code,omitempty"`
 }
 
 func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, error) {
@@ -68,7 +71,35 @@ func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, erro
 
 	prog, err := envllm.Compile(c.ID+".rlm", dslCode, mode)
 	if err != nil {
-		return Result{CaseID: c.ID, Status: "compile_error", Error: fmt.Sprintf("compile failed: %v", err), Passed: c.Scoring.Mode == "status_compile_error"}, nil
+		return Result{
+			CaseID: c.ID, 
+			Status: "compile_error", 
+			Error:  fmt.Sprintf("compile failed: %v", err), 
+			Passed: c.Scoring.Mode == "status_compile_error",
+			Code:   dslCode,
+		}, nil
+	}
+
+	// Setup ops table for linter
+	tbl, err := ops.LoadTable("assets/ops.json")
+	if err != nil {
+		tbl, _ = ops.LoadTable("../assets/ops.json")
+	}
+	lnt := lint.NewLinter(tbl)
+	lintErrs := lnt.Lint(prog.AST)
+	if len(lintErrs) > 0 {
+		var errs []runtime.Error
+		for _, le := range lintErrs {
+			errs = append(errs, runtime.Error{Code: le.Code, Message: le.Message, Hint: le.Hint})
+		}
+		return Result{
+			CaseID: c.ID, 
+			Status: "error", 
+			Error:  fmt.Sprintf("lint failed: %d errors", len(lintErrs)), 
+			Passed: c.Scoring.Mode == "status_error",
+			Output: runtime.ExecResult{Status: "error", Errors: errs},
+			Code:   dslCode,
+		}, nil
 	}
 
 	// Setup store and PROMPT input
@@ -92,8 +123,7 @@ func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, erro
 	
 	execRes, err := prog.Execute(ctx, opt)
 	if err != nil {
-		// Execution errors (like panic or system error) are different from DSL status errors
-		return Result{CaseID: c.ID, Error: fmt.Sprintf("execution crashed: %v", err), Passed: false}, nil
+		return Result{CaseID: c.ID, Error: fmt.Sprintf("execution crashed: %v", err), Passed: false, Code: dslCode}, nil
 	}
 
 	passed, mismatch := scoreResult(c, execRes, baseDir)
@@ -104,6 +134,7 @@ func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, erro
 		Status:   execRes.Status,
 		Output:   execRes,
 		Mismatch: mismatch,
+		Code:     dslCode,
 	}, nil
 }
 
@@ -136,11 +167,13 @@ func scoreResult(c Case, res runtime.ExecResult, baseDir string) (bool, string) 
 			return false, fmt.Sprintf("failed to unmarshal expected JSON: %v", err)
 		}
 
-		// Handle numeric comparison (json.Unmarshal uses float64)
+		// Handle numeric comparison
 		if ev, ok := expectedVal.(float64); ok {
-			if gv, ok := res.Final.V.(int); ok {
-				if float64(gv) == ev {
-					return true, ""
+			if res.Final.Kind == runtime.KindInt || res.Final.Kind == runtime.KindOffset {
+				if gv, ok := res.Final.V.(int); ok {
+					if float64(gv) == ev {
+						return true, ""
+					}
 				}
 			}
 		}

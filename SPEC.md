@@ -159,10 +159,12 @@ This grammar is intentionally strict and canonical (Anka-style) to ensure reliab
    EnvLLM-DSL 0.2 — Full EBNF
    ========================= *)
 
-program         = ws, [header], ws, { cell, ws }, EOF ;
+program         = ws, [header], ws, { requirement, ws }, { cell, ws }, EOF ;
 
 header          = "RLMDSL", req_ws, version, line_end ;
 version         = "0.1" | "0.2" ;
+
+requirement     = "REQUIRES", req_ws, "capability", "=", string, line_end ;
 
 cell            = "CELL", req_ws, ident, ":", line_end,
                   { stmt_line } ;

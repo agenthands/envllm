@@ -18,12 +18,18 @@ func NewLinter(table *ops.Table) *Linter {
 func (l *Linter) Lint(prog *ast.Program) []Error {
 	var errs []Error
 	symbols := make(map[string]string) // name -> type
+	requiredCaps := make(map[string]bool)
+
+	// 1. Process Requirements
+	for _, req := range prog.Requirements {
+		requiredCaps[req.Capability] = true
+	}
 
 	for _, cell := range prog.Cells {
 		for _, stmt := range cell.Stmts {
 			switch s := stmt.(type) {
 			case *ast.OpStmt:
-				opErrs, outType := l.lintOpStmt(s, symbols)
+				opErrs, outType := l.lintOpStmt(s, symbols, requiredCaps)
 				errs = append(errs, opErrs...)
 				if s.Into != "" && outType != "" {
 					symbols[s.Into] = outType
@@ -41,7 +47,7 @@ func (l *Linter) Lint(prog *ast.Program) []Error {
 	return errs
 }
 
-func (l *Linter) lintOpStmt(s *ast.OpStmt, symbols map[string]string) ([]Error, string) {
+func (l *Linter) lintOpStmt(s *ast.OpStmt, symbols map[string]string, caps map[string]bool) ([]Error, string) {
 	var errs []Error
 
 	opDef, ok := l.table.Ops[s.OpName]
@@ -52,6 +58,21 @@ func (l *Linter) lintOpStmt(s *ast.OpStmt, symbols map[string]string) ([]Error, 
 			Loc:     s.Loc,
 		})
 		return errs, ""
+	}
+
+	// Check Capability requirements
+	for _, c := range opDef.Capabilities {
+		if c == "pure" {
+			continue
+		}
+		if !caps[c] {
+			errs = append(errs, Error{
+				Code:    "LINT_MISSING_REQUIRES",
+				Message: fmt.Sprintf("operation %s requires capability %q but it was not declared with REQUIRES", s.OpName, c),
+				Loc:     s.Loc,
+				Hint:    fmt.Sprintf("Add 'REQUIRES capability=%q' to the top of your program.", c),
+			})
+		}
 	}
 
 	// 1. Enforce clause order and type check arguments
@@ -75,7 +96,7 @@ func (l *Linter) lintOpStmt(s *ast.OpStmt, symbols map[string]string) ([]Error, 
 				})
 			}
 			
-			// Enum check: allow raw identifiers if they match allowed enum values
+			// Enum check
 			isEnumVal := false
 			if len(param.Enum) > 0 {
 				if ident, ok := arg.Value.(*ast.IdentExpr); ok {
@@ -103,7 +124,7 @@ func (l *Linter) lintOpStmt(s *ast.OpStmt, symbols map[string]string) ([]Error, 
 		})
 	}
 
-	// 3. Check INTO type annotation if present
+	// 3. Check INTO type annotation
 	if s.IntoType != "" && opDef.ResultType != "" && s.IntoType != string(opDef.ResultType) {
 		errs = append(errs, Error{
 			Code:    "LINT_TYPE_MISMATCH",
@@ -124,20 +145,29 @@ func (l *Linter) lintExpr(expr ast.Expr, expectedType string, symbols map[string
 		var ok bool
 		actualType, ok = symbols[e.Name]
 		if !ok {
-			// PROMPT is a special global
 			if e.Name == "PROMPT" {
 				actualType = "TEXT"
 			} else {
-				errs = append(errs, Error{
-					Code:    "LINT_UNDEFINED_VAR",
-					Message: fmt.Sprintf("undefined variable: %s", e.Name),
-					Loc:     e.Pos(),
-				})
+				// NO_META rule: catch common hallucinations
+				if e.Name == "steps" || e.Name == "json" || e.Name == "response" {
+					errs = append(errs, Error{
+						Code:    "LINT_NO_META",
+						Message: fmt.Sprintf("forbidden reference to meta-object: %s", e.Name),
+						Loc:     e.Pos(),
+						Hint:    "Do not attempt to inspect internal DSL state. Only use variables you defined via INTO.",
+					})
+				} else {
+					errs = append(errs, Error{
+						Code:    "LINT_UNDEFINED_VAR",
+						Message: fmt.Sprintf("undefined variable: %s", e.Name),
+						Loc:     e.Pos(),
+					})
+				}
 				return errs
 			}
 		}
 	case *ast.StringExpr:
-		actualType = "TEXT" // We treat quoted strings as TEXT in v0.1/v0.2
+		actualType = "TEXT"
 	case *ast.IntExpr:
 		actualType = "INT"
 	case *ast.BoolExpr:
@@ -147,18 +177,31 @@ func (l *Linter) lintExpr(expr ast.Expr, expectedType string, symbols map[string
 	}
 
 	if expectedType != "" && actualType != "" && expectedType != actualType {
-		// Small exception: NULL matches anything? Usually not in strict DSLs.
-		// v0.1/v0.2 strictness says they must match.
 		if actualType != "NULL" {
+			hint := ""
+			if expectedType == "TEXT" {
+				hint = fmt.Sprintf("Use TO_TEXT VALUE=%s to convert.", l.getExprName(expr))
+			} else if expectedType == "OFFSET" && actualType == "INT" {
+				hint = fmt.Sprintf("Use OFFSET VALUE=%s to create a position.", l.getExprName(expr))
+			}
+
 			errs = append(errs, Error{
 				Code:    "LINT_TYPE_MISMATCH",
 				Message: fmt.Sprintf("type mismatch: expected %s, got %s", expectedType, actualType),
 				Loc:     expr.Pos(),
+				Hint:    hint,
 			})
 		}
 	}
 
 	return errs
+}
+
+func (l *Linter) getExprName(e ast.Expr) string {
+	if id, ok := e.(*ast.IdentExpr); ok {
+		return id.Name
+	}
+	return "value"
 }
 
 func (l *Linter) getCanonicalTemplate(op *ops.Op) string {

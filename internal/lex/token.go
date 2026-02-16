@@ -16,6 +16,8 @@ const (
 	TypeSET_FINAL
 	TypeASSERT
 	TypePRINT
+	TypeREQUIRES
+	TypeCapability
 
 	// Literals
 	TypeIdent
@@ -28,6 +30,7 @@ const (
 	// Symbols
 	TypeColon
 	TypeNewline
+	TypeEq
 )
 
 // Loc represents a location in the source code.

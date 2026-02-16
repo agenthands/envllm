@@ -17,6 +17,12 @@ func Format(prog *ast.Program) string {
 		sb.WriteString("\n")
 	}
 
+	for _, req := range prog.Requirements {
+		sb.WriteString("REQUIRES capability=")
+		sb.WriteString(quoteString(req.Capability))
+		sb.WriteString("\n")
+	}
+
 	for i, cell := range prog.Cells {
 		if i > 0 || prog.Version != "" {
 			sb.WriteString("\n")

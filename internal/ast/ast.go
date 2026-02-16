@@ -11,15 +11,25 @@ type Node interface {
 
 // Program represents the root of the RLMDSL script.
 type Program struct {
-	Version string  `json:"version,omitempty"`
-	Cells   []*Cell `json:"cells,omitempty"`
+	Version      string         `json:"version,omitempty"`
+	Requirements []*Requirement `json:"requirements,omitempty"`
+	Cells        []*Cell        `json:"cells,omitempty"`
 }
 
 func (p *Program) Pos() lex.Loc {
+	if len(p.Requirements) > 0 {
+		return p.Requirements[0].Loc
+	}
 	if len(p.Cells) > 0 {
 		return p.Cells[0].Pos()
 	}
 	return lex.Loc{}
+}
+
+// Requirement represents a REQUIRES capability statement.
+type Requirement struct {
+	Loc        lex.Loc `json:"-"`
+	Capability string  `json:"capability"`
 }
 
 // Cell represents a block of execution.

@@ -21,7 +21,10 @@ func TestLLMIntegration_Gemini(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	model, err := googleai.New(ctx, googleai.WithAPIKey(apiKey))
+	// Attempt to use a stronger model if available, or default.
+	// langchaingo/llms/googleai defaults to gemini-pro.
+	// We can specify model via option.
+	model, err := googleai.New(ctx, googleai.WithAPIKey(apiKey), googleai.WithDefaultModel("gemini-1.5-pro"))
 	if err != nil {
 		t.Fatalf("failed to create googleai model: %v", err)
 	}

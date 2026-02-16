@@ -64,6 +64,9 @@ func (l *Lexer) NextToken() Token {
 		tok.Type = TypeString
 		tok.Value = l.readString()
 		return tok
+	case '=':
+		tok.Type = TypeEq
+		tok.Value = "="
 	case ':':
 		tok.Type = TypeColon
 		tok.Value = ":"
@@ -155,6 +158,10 @@ func lookupIdent(ident string) Type {
 		return TypeASSERT
 	case "PRINT":
 		return TypePRINT
+	case "REQUIRES":
+		return TypeREQUIRES
+	case "capability":
+		return TypeCapability
 	case "true", "false":
 		return TypeBool
 	case "null":

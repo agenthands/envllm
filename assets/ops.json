@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "ops": [
     {
       "name": "STATS",
@@ -20,7 +20,7 @@
       "capabilities": [
         "pure"
       ],
-      "result_type": "INT",
+      "result_type": "OFFSET",
       "signature": [
         {
           "kw": "SOURCE",
@@ -57,7 +57,7 @@
         },
         {
           "kw": "CENTER",
-          "type": "INT"
+          "type": "OFFSET"
         },
         {
           "kw": "RADIUS",
@@ -79,11 +79,11 @@
         },
         {
           "kw": "START",
-          "type": "INT"
+          "type": "OFFSET"
         },
         {
           "kw": "END",
-          "type": "INT"
+          "type": "OFFSET"
         }
       ],
       "into": true
@@ -199,66 +199,111 @@
       ],
       "into": true
     },
+    {
+      "name": "LIST_DIR",
+      "capabilities": [
+        "fs_read"
+      ],
+      "result_type": "JSON",
+      "signature": [
         {
-          "name": "LIST_DIR",
-          "capabilities": [
-            "fs_read"
-          ],
-          "result_type": "JSON",
-          "signature": [
-            {
-              "kw": "PATH",
-              "type": "TEXT"
-            }
-          ],
-          "into": true
-        },
-        {
-          "name": "GET_SPAN_START",
-          "capabilities": [
-            "pure"
-          ],
-          "result_type": "INT",
-          "signature": [
-            {
-              "kw": "SOURCE",
-              "type": "SPAN"
-            }
-          ],
-          "into": true
-        },
-            {
-              "name": "GET_SPAN_END",
-              "capabilities": [
-                "pure"
-              ],
-              "result_type": "INT",
-              "signature": [
-                {
-                  "kw": "SOURCE",
-                  "type": "SPAN"
-                }
-              ],
-              "into": true
-            },
-            {
-              "name": "CONCAT",
-              "capabilities": [
-                "pure"
-              ],
-              "result_type": "TEXT",
-              "signature": [
-                {
-                  "kw": "A",
-                  "type": "TEXT"
-                },
-                {
-                  "kw": "B",
-                  "type": "TEXT"
-                }
-              ],
-              "into": true
-            }
-          ]
+          "kw": "PATH",
+          "type": "TEXT"
         }
-        
+      ],
+      "into": true
+    },
+    {
+      "name": "GET_SPAN_START",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "OFFSET",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "SPAN"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "GET_SPAN_END",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "OFFSET",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "SPAN"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "CONCAT_TEXT",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "TEXT",
+      "signature": [
+        {
+          "kw": "A",
+          "type": "TEXT"
+        },
+        {
+          "kw": "B",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "TO_TEXT",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "TEXT",
+      "signature": [
+        {
+          "kw": "VALUE",
+          "type": ""
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "OFFSET",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "OFFSET",
+      "signature": [
+        {
+          "kw": "VALUE",
+          "type": "INT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "SPAN",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "SPAN",
+      "signature": [
+        {
+          "kw": "START",
+          "type": "OFFSET"
+        },
+        {
+          "kw": "END",
+          "type": "OFFSET"
+        }
+      ],
+      "into": true
+    }
+  ]
+}

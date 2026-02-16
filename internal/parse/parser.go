@@ -49,6 +49,14 @@ func (p *Parser) Parse() (*ast.Program, error) {
 		}
 	}
 
+	for p.curToken.Type == lex.TypeREQUIRES {
+		req, err := p.parseRequirement()
+		if err != nil {
+			return nil, err
+		}
+		prog.Requirements = append(prog.Requirements, req)
+	}
+
 	for p.curToken.Type != lex.TypeEOF {
 		if p.curToken.Type == lex.TypeNewline {
 			p.nextToken()
@@ -66,6 +74,32 @@ func (p *Parser) Parse() (*ast.Program, error) {
 	}
 
 	return prog, nil
+}
+
+func (p *Parser) parseRequirement() (*ast.Requirement, error) {
+	req := &ast.Requirement{Loc: p.curToken.Loc}
+	p.nextToken() // REQUIRES
+
+	if p.curToken.Type != lex.TypeCapability {
+		return nil, fmt.Errorf("%s: expected 'capability' after REQUIRES", p.curToken.Loc)
+	}
+	p.nextToken()
+
+	if p.curToken.Type != lex.TypeEq {
+		return nil, fmt.Errorf("%s: expected '=' after capability", p.curToken.Loc)
+	}
+	p.nextToken()
+
+	if p.curToken.Type != lex.TypeString {
+		return nil, fmt.Errorf("%s: expected capability name as string", p.curToken.Loc)
+	}
+	req.Capability = p.curToken.Value
+	p.nextToken()
+
+	if err := p.expectNewline(); err != nil {
+		return nil, err
+	}
+	return req, nil
 }
 
 func (p *Parser) parseCell() (*ast.Cell, error) {

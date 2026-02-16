@@ -1,18 +1,20 @@
 # EnvLLM-DSL Dialect Card (prepend to the LLM)
-Output ONLY valid EnvLLM-DSL 0.1 code.
+Output ONLY valid EnvLLM-DSL 0.2 code.
 
 Rules:
 - Use CELL blocks.
-- Every OP line ends with INTO <var>.
+- Every OP line ends with INTO <var>: <Type>.
 - Keyword order must match ops.json.
 - Never reuse a variable name.
 - Literals: "string", 123, true, false, null.
 - Indentation: exactly 2 spaces per statement.
+- Types: TEXT, INT, OFFSET, SPAN, BOOL, JSON.
 
 Ops:
 - STATS SOURCE <TEXT> INTO <JSON>
-- FIND_TEXT SOURCE <TEXT> NEEDLE <TEXT> MODE FIRST|LAST IGNORE_CASE true|false INTO <INT>
-- WINDOW_TEXT SOURCE <TEXT> CENTER <INT> RADIUS <INT> INTO <TEXT>
+- FIND_TEXT SOURCE <TEXT> NEEDLE <TEXT> MODE FIRST|LAST IGNORE_CASE true|false INTO <OFFSET>
+- WINDOW_TEXT SOURCE <TEXT> CENTER <OFFSET> RADIUS <INT> INTO <TEXT>
+- SLICE_TEXT SOURCE <TEXT> START <OFFSET> END <OFFSET> INTO <TEXT>
 - JSON_PARSE SOURCE <TEXT> INTO <JSON>
 - JSON_GET SOURCE <JSON> PATH <TEXT> INTO <JSON>
 - SUBCALL SOURCE <TEXT> TASK <TEXT> DEPTH_COST <INT> INTO <JSON>
@@ -20,13 +22,16 @@ Ops:
 - READ_FILE PATH <TEXT> INTO <TEXT>
 - WRITE_FILE PATH <TEXT> SOURCE <TEXT> INTO <BOOL>
 - LIST_DIR PATH <TEXT> INTO <JSON>
-- CONCAT A <TEXT> B <TEXT> INTO <TEXT>
-- GET_SPAN_START SOURCE <SPAN> INTO <INT>
-- GET_SPAN_END SOURCE <SPAN> INTO <INT>
-- SLICE_TEXT SOURCE <TEXT> START <INT> END <INT> INTO <TEXT>
+- CONCAT_TEXT A <TEXT> B <TEXT> INTO <TEXT>
+- TO_TEXT VALUE <any> INTO <TEXT>
+- OFFSET VALUE <INT> INTO <OFFSET>
+- SPAN START <OFFSET> END <OFFSET> INTO <SPAN>
+- GET_SPAN_START SOURCE <SPAN> INTO <OFFSET>
+- GET_SPAN_END SOURCE <SPAN> INTO <OFFSET>
 
 Notes:
-- NO string concatenation with '+'. Use CONCAT.
+- NO string concatenation with '+'. Use CONCAT_TEXT.
 - NO property access with '.'. Use JSON_GET or GET_SPAN_START.
-- NO templates with '{{}}' or '${}'.
+- NO implicit conversion. Use TO_TEXT to convert numbers to strings.
+- OFFSET is for text positions. INT is for counts/budgets.
 - If you need to transform text to JSON, use SUBCALL or JSON_PARSE.
