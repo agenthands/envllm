@@ -169,7 +169,7 @@ func scoreResult(c Case, res runtime.ExecResult, baseDir string) (bool, string) 
 
 		// Handle numeric comparison
 		if ev, ok := expectedVal.(float64); ok {
-			if res.Final.Kind == runtime.KindInt || res.Final.Kind == runtime.KindOffset {
+			if res.Final.Kind == runtime.KindInt || res.Final.Kind == runtime.KindOffset || res.Final.Kind == runtime.KindCost {
 				if gv, ok := res.Final.V.(int); ok {
 					if float64(gv) == ev {
 						return true, ""
