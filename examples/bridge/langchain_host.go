@@ -172,22 +172,20 @@ func FormatPrompt(dialectCard, task, obsJSON string) string {
 SYSTEM INSTRUCTIONS:
 - You are an EnvLLM Agent.
 - Your task is: %s
-- You communicate ONLY by emitting EnvLLM-DSL 0.1 CELL blocks.
-- One CELL per turn.
-- A CELL starts with "CELL <name>:" followed by indented statements.
-- Every statement must be indented by EXACTLY 2 spaces.
+- You communicate ONLY by emitting EnvLLM-DSL 0.2 code.
+- Declare required capabilities using "REQUIRES capability=..." at the VERY TOP, BEFORE any CELL.
+- Then define one "CELL <name>:" block.
+- Every statement inside the CELL must be indented by EXACTLY 2 spaces.
 - NO line numbers, NO preambles, NO conversational text, NO "NEXT CELL:".
 - Use the available "PROMPT" variable to access initial content.
 - Use "SET_FINAL SOURCE <expr>" when the task is complete.
 
 EXAMPLE VALID OUTPUT:
+REQUIRES capability="fs_read"
+
 CELL find_data:
-  FIND_TEXT SOURCE PROMPT NEEDLE "target" MODE FIRST IGNORE_CASE true INTO pos
-  WINDOW_TEXT SOURCE PROMPT CENTER pos RADIUS 100 INTO snippet
-  SET_FINAL SOURCE snippet
+  READ_FILE PATH "data.txt" INTO content: TEXT
+  SET_FINAL SOURCE content
 
 OBSERVATION:
 %s
-
-NEXT CELL:`, dialectCard, task, obsJSON)
-}
