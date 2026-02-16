@@ -33,7 +33,7 @@ func (m *MockModel) Complete(ctx context.Context, task, prompt string) (string, 
   SET_FINAL SOURCE "line1\nline2\ttab"
 `, nil
 	case "Enforce step budget":
-		return "CELL test:\n  PRINT SOURCE 1\n  PRINT SOURCE 2\n  PRINT SOURCE 3\n", nil
+		return "CELL test:\n  STATS SOURCE PROMPT INTO stats: STRUCT\n  GET_FIELD SOURCE stats FIELD \"cost\" INTO cost: INT\n  TO_TEXT VALUE cost INTO cost_text: TEXT\n  SET_FINAL SOURCE cost_text\n", nil
 	case "Denied capability access":
 		return "REQUIRES capability=\"fs_read\"\nCELL test:\n  READ_FILE PATH \"/etc/passwd\" INTO out: TEXT\n  SET_FINAL SOURCE out\n", nil
 	case "Enforce recursion depth limit":
