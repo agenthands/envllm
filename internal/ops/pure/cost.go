@@ -1,8 +1,6 @@
 package pure
 
 import (
-	"fmt"
-
 	"github.com/agenthands/envllm/internal/runtime"
 )
 

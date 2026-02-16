@@ -2,6 +2,7 @@ package lint
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/agenthands/envllm/internal/ast"
 	"github.com/agenthands/envllm/internal/ops"
@@ -142,6 +143,33 @@ func (l *Linter) lintExpr(expr ast.Expr, expectedType string, symbols map[string
 
 	switch e := expr.(type) {
 	case *ast.IdentExpr:
+		if strings.Contains(e.Name, ".") {
+			parts := strings.Split(e.Name, ".")
+			obj := parts[0]
+			prop := parts[1] // Simplification for 1 level
+			
+			// Auto-fix hint generation
+			hint := fmt.Sprintf("Dot access (%s) is not allowed in STRICT mode.", e.Name)
+			if prop == "cost" {
+				hint = fmt.Sprintf("Use GET_COST result=%s INTO cost: COST", obj)
+			} else if prop == "start" {
+				hint = fmt.Sprintf("Use GET_SPAN_START span=%s INTO start: OFFSET", obj)
+			} else if prop == "end" {
+				hint = fmt.Sprintf("Use GET_SPAN_END span=%s INTO end: OFFSET", obj)
+			} else {
+				hint = fmt.Sprintf("Use JSON_GET SOURCE %s PATH \"%s\" INTO val: JSON", obj, prop)
+			}
+
+			errs = append(errs, Error{
+				Code:             "LINT_DOT_ACCESS_FORBIDDEN",
+				Message:          fmt.Sprintf("Dot access (%s) is not allowed in STRICT mode.", e.Name),
+				Loc:              e.Pos(),
+				Hint:             hint,
+				ExpectedTemplate: hint, // Reuse hint as template for now
+			})
+			return errs
+		}
+
 		var ok bool
 		actualType, ok = symbols[e.Name]
 		if !ok {
