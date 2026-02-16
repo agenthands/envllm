@@ -189,3 +189,6 @@ CELL find_data:
 
 OBSERVATION:
 %s
+
+NEXT CELL:`, dialectCard, task, obsJSON)
+}
