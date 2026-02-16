@@ -96,7 +96,9 @@ func (h *Harness) generateWithRepair(ctx context.Context, task string, contextSt
 		var sb strings.Builder
 		for _, le := range lintErrs {
 			sb.WriteString(fmt.Sprintf("- [%s] %s\n", le.Code, le.Message))
-			if le.ExpectedTemplate != "" {
+			if le.Hint != "" {
+				sb.WriteString(fmt.Sprintf("  Hint: %s\n", le.Hint))
+			} else if le.ExpectedTemplate != "" {
 				sb.WriteString(fmt.Sprintf("  Expected: %s\n", le.ExpectedTemplate))
 			}
 		}
