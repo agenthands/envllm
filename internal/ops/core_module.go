@@ -48,6 +48,8 @@ func (m *CoreModule) Operations() []Op {
 		{Name: "TO_TEXT", Capabilities: []string{"pure"}, ResultType: runtime.KindText, Signature: []Param{{Kw: "VALUE", Type: ""}}, Into: true},
 		{Name: "OFFSET", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{{Kw: "VALUE", Type: runtime.KindInt}}, Into: true},
 		{Name: "SPAN", Capabilities: []string{"pure"}, ResultType: runtime.KindSpan, Signature: []Param{{Kw: "START", Type: runtime.KindOffset}, {Kw: "END", Type: runtime.KindOffset}}, Into: true},
+		{Name: "AS_SPAN", Capabilities: []string{"pure"}, ResultType: runtime.KindSpan, Signature: []Param{{Kw: "OFFSET", Type: runtime.KindOffset}, {Kw: "LEN", Type: runtime.KindInt}}, Into: true},
+		{Name: "GET_COST", Capabilities: []string{"pure"}, ResultType: runtime.KindCost, Signature: []Param{{Kw: "RESULT", Type: runtime.KindJSON}}, Into: true},
 		{Name: "SUBCALL", Capabilities: []string{"llm"}, ResultType: runtime.KindJSON, Signature: []Param{
 			{Kw: "SOURCE", Type: runtime.KindText},
 			{Kw: "TASK", Type: runtime.KindText},
@@ -104,6 +106,12 @@ func (m *CoreModule) Handlers() map[string]OpImplementation {
 		},
 		"SPAN": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			return pure.Span(s, args[0].V.(int), args[1].V.(int))
+		},
+		"AS_SPAN": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.AsSpan(s, args[0].V.(int), args[1].V.(int))
+		},
+		"GET_COST": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.GetCost(s, args[0])
 		},
 		"SUBCALL": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			if s.Host == nil { return runtime.Value{}, fmt.Errorf("SUBCALL failed: no host configured") }

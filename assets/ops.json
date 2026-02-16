@@ -304,6 +304,38 @@
         }
       ],
       "into": true
+    },
+    {
+      "name": "AS_SPAN",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "SPAN",
+      "signature": [
+        {
+          "kw": "OFFSET",
+          "type": "OFFSET"
+        },
+        {
+          "kw": "LEN",
+          "type": "INT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "GET_COST",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "COST",
+      "signature": [
+        {
+          "kw": "RESULT",
+          "type": "JSON"
+        }
+      ],
+      "into": true
     }
   ]
 }

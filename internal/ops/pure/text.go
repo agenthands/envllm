@@ -138,3 +138,8 @@ func Offset(s *runtime.Session, val int) (runtime.Value, error) {
 func Span(s *runtime.Session, start, end int) (runtime.Value, error) {
 	return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: start, End: end}}, nil
 }
+
+// AsSpan implements the AS_SPAN operation.
+func AsSpan(s *runtime.Session, offset, length int) (runtime.Value, error) {
+	return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: offset, End: offset + length}}, nil
+}
