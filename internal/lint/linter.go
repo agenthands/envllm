@@ -65,11 +65,13 @@ func (l *Linter) lintOpStmt(s *ast.OpStmt, symbols map[string]string) ([]Error, 
 		for i, arg := range s.Args {
 			param := opDef.Signature[i]
 			if arg.Keyword != param.Kw {
+				template := l.getCanonicalTemplate(opDef)
 				errs = append(errs, Error{
-					Code:    "LINT_CLAUSE_ORDER",
-					Message: fmt.Sprintf("%s: clause %d must be %s, got %s", s.OpName, i+1, param.Kw, arg.Keyword),
-					Loc:     s.Loc,
-					Hint:    fmt.Sprintf("Reorder clauses to match canonical form: %s", l.getCanonicalTemplate(opDef)),
+					Code:             "LINT_CLAUSE_ORDER",
+					Message:          fmt.Sprintf("%s: clause %d must be %s, got %s", s.OpName, i+1, param.Kw, arg.Keyword),
+					Loc:              s.Loc,
+					Hint:             fmt.Sprintf("Reorder clauses to match canonical form: %s", template),
+					ExpectedTemplate: template,
 				})
 			}
 			
@@ -174,8 +176,9 @@ func (l *Linter) getCanonicalTemplate(op *ops.Op) string {
 }
 
 type Error struct {
-	Code    string
-	Message string
-	Loc     interface{}
-	Hint    string
+	Code             string
+	Message          string
+	Loc              interface{}
+	Hint             string
+	ExpectedTemplate string
 }

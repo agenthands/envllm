@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/agenthands/envllm/internal/ast"
-	"github.com/agenthands/envllm/internal/fmt"
 	"github.com/agenthands/envllm/internal/lint"
+	"github.com/agenthands/envllm/internal/metrics"
 	"github.com/agenthands/envllm/internal/ops"
 	"github.com/agenthands/envllm/pkg/envllm"
 )
@@ -17,55 +17,105 @@ type Model interface {
 }
 
 type Harness struct {
-	model  Model
-	table  *ops.Table
-	linter *lint.Linter
+	model   Model
+	table   *ops.Table
+	linter  *lint.Linter
+	Metrics *metrics.SessionMetrics
 }
 
 func NewHarness(m Model, table *ops.Table) *Harness {
 	return &Harness{
-		model:  m,
-		table:  table,
-		linter: lint.NewLinter(table),
+		model:   m,
+		table:   table,
+		linter:  lint.NewLinter(table),
+		Metrics: &metrics.SessionMetrics{},
 	}
 }
 
-// GenerateStepByStep implements the two-pass generation protocol.
+// GenerateStepByStep implements the two-pass generation protocol with a repair loop.
 func (h *Harness) GenerateStepByStep(ctx context.Context, task string, initialPrompt string) (*ast.Program, error) {
 	// Pass 1: Skeleton
-	skeleton, err := h.generateSkeleton(ctx, task, initialPrompt)
+	skeleton, err := h.generateWithRepair(ctx, task, initialPrompt, "skeleton")
 	if err != nil {
 		return nil, err
 	}
 
-	// Pass 2: Fill (step by step)
-	// For each step in the skeleton, we prompt the model to fill it.
-	// This is a bit complex for a single turn DSL, but the plan says "step by step".
-	// In the context of RLM, it means generating one CELL at a time.
-	
-	return skeleton, nil // Placeholder for now, Pass 1 is the main skeleton
+	return skeleton, nil
 }
 
-func (h *Harness) generateSkeleton(ctx context.Context, task string, initialPrompt string) (*ast.Program, error) {
-	prompt := fmt.Sprintf("Task: %s
-Context: %s
-
-Write the skeleton of an EnvLLM-DSL program (CELL names and ops only).", task, initialPrompt)
-	
-	resp, err := h.model.Complete(ctx, prompt)
-	if err != nil {
-		return nil, err
+func (h *Harness) generateWithRepair(ctx context.Context, task string, contextStr string, mode string) (*ast.Program, error) {
+	prompt := fmt.Sprintf("Task: %s\nContext: %s\n\nWrite an EnvLLM-DSL program.", task, contextStr)
+	if mode == "skeleton" {
+		prompt += " Focus on the skeleton (CELL names and ops only)."
 	}
 
-	// Basic cleaning
-	resp = h.cleanDSL(resp)
+	maxRetries := 3
+	var lastErrors string
+	var lastProg *ast.Program
 
-	prog, err := envllm.Compile("skeleton.rlm", resp, envllm.ModeStrict)
-	if err != nil {
-		return nil, fmt.Errorf("skeleton failed validation: %v", err)
+	for i := 0; i < maxRetries; i++ {
+		currentPrompt := prompt
+		if lastErrors != "" {
+			currentPrompt += "\n\nYour previous output had errors:\n" + lastErrors + "\n\nPlease fix them. Only output the corrected DSL."
+		}
+
+		resp, err := h.model.Complete(ctx, currentPrompt)
+		if err != nil {
+			return nil, err
+		}
+
+		dslCode := h.cleanDSL(resp)
+		prog, parseErr := envllm.Compile("harness.rlm", dslCode, envllm.ModeStrict)
+		
+		h.Metrics.RecordParse(parseErr == nil)
+		if parseErr != nil {
+			h.Metrics.RecordRepair()
+			lastErrors = fmt.Sprintf("Parse Error: %v", parseErr)
+			continue
+		}
+
+		// Drift Guard (EPIC F3)
+		if lastProg != nil {
+			if driftErr := h.checkDrift(lastProg, prog.AST); driftErr != nil {
+				h.Metrics.RecordRepair()
+				lastErrors = fmt.Sprintf("Drift Violation: %v", driftErr)
+				continue
+			}
+		}
+
+		lintErrs := h.linter.Lint(prog.AST)
+		h.Metrics.RecordLint(len(lintErrs) == 0)
+		if len(lintErrs) == 0 {
+			return prog.AST, nil
+		}
+
+		h.Metrics.RecordRepair()
+		lastProg = prog.AST
+
+		// Format linter errors for feedback
+		var sb strings.Builder
+		for _, le := range lintErrs {
+			sb.WriteString(fmt.Sprintf("- [%s] %s\n", le.Code, le.Message))
+			if le.ExpectedTemplate != "" {
+				sb.WriteString(fmt.Sprintf("  Expected: %s\n", le.ExpectedTemplate))
+			}
+		}
+		lastErrors = sb.String()
 	}
 
-	return prog.AST, nil
+	return nil, fmt.Errorf("failed to generate valid DSL after %d retries. Last errors:\n%s", maxRetries, lastErrors)
+}
+
+func (h *Harness) checkDrift(old, new *ast.Program) error {
+	if len(old.Cells) != len(new.Cells) {
+		return fmt.Errorf("number of cells changed from %d to %d", len(old.Cells), len(new.Cells))
+	}
+	for i := range old.Cells {
+		if old.Cells[i].Name != new.Cells[i].Name {
+			return fmt.Errorf("cell name changed from %q to %q at index %d", old.Cells[i].Name, new.Cells[i].Name, i)
+		}
+	}
+	return nil
 }
 
 func (h *Harness) cleanDSL(s string) string {

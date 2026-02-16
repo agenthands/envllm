@@ -24,6 +24,7 @@ type Case struct {
 	Policy      runtime.Policy `json:"policy"`
 	ExpectedRef string         `json:"expected_ref,omitempty"`
 	Scoring     ScoringConfig  `json:"scoring"`
+	Mode        string         `json:"mode,omitempty"` // "compat" or "strict"
 	Host        runtime.Host   `json:"-"`
 }
 
@@ -60,7 +61,12 @@ func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, erro
 		return Result{CaseID: c.ID, Error: fmt.Sprintf("model failed: %v", err)}, nil
 	}
 
-	prog, err := envllm.Compile(c.ID+".rlm", dslCode, envllm.ModeCompat)
+	mode := envllm.ModeCompat
+	if c.Mode == "strict" {
+		mode = envllm.ModeStrict
+	}
+
+	prog, err := envllm.Compile(c.ID+".rlm", dslCode, mode)
 	if err != nil {
 		return Result{CaseID: c.ID, Status: "compile_error", Error: fmt.Sprintf("compile failed: %v", err), Passed: c.Scoring.Mode == "status_compile_error"}, nil
 	}

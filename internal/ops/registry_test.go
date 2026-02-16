@@ -223,7 +223,7 @@ func TestRegistry_Dispatch_Errors(t *testing.T) {
 	}
 
 	// Test Result type mismatch
-	reg.registerDefaults() // restore STATS
+	reg.RegisterModule(&CoreModule{}) // restore STATS
 	reg.impls["STATS"] = func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 		return runtime.Value{Kind: runtime.KindInt, V: 1}, nil
 	}

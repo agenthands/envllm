@@ -23,6 +23,7 @@ func NewRegistry(tbl *Table) *Registry {
 	}
 	r.RegisterModule(&CoreModule{})
 	r.RegisterModule(&FSModule{})
+	r.RegisterModule(&WebModule{})
 	return r
 }
 
