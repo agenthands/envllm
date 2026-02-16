@@ -12,6 +12,7 @@ Rules:
 
 Ops:
 - STATS SOURCE <TEXT> INTO <JSON>
+  - Returns: {"bytes": INT, "lines": INT}
 - FIND_TEXT SOURCE <TEXT> NEEDLE <TEXT> MODE FIRST|LAST IGNORE_CASE true|false INTO <OFFSET>
 - WINDOW_TEXT SOURCE <TEXT> CENTER <OFFSET> RADIUS <INT> INTO <TEXT>
 - SLICE_TEXT SOURCE <TEXT> START <OFFSET> END <OFFSET> INTO <TEXT>
@@ -32,6 +33,6 @@ Ops:
 Notes:
 - NO string concatenation with '+'. Use CONCAT_TEXT.
 - NO property access with '.'. Use JSON_GET or GET_SPAN_START.
-- NO implicit conversion. Use TO_TEXT to convert numbers to strings.
-- OFFSET is for text positions. INT is for counts/budgets.
+- NO implicit conversion. Use TO_TEXT to convert OFFSET/INT to TEXT before CONCAT.
+- OFFSET is an opaque position handle. Do not use as a number.
 - If you need to transform text to JSON, use SUBCALL or JSON_PARSE.

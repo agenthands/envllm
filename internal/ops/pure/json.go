@@ -39,10 +39,30 @@ func JSONGet(s *runtime.Session, source runtime.Value, path string) (runtime.Val
 		}
 		val, ok := m[part]
 		if !ok {
-			return runtime.Value{}, fmt.Errorf("JSON_GET failed: key %q not found", part)
+			// Provide available keys hint
+			keys := make([]string, 0, len(m))
+			for k := range m {
+				keys = append(keys, k)
+			}
+			return runtime.Value{}, fmt.Errorf("JSON_GET failed: key %q not found. Available keys: %v", part, keys)
 		}
 		curr = val
 	}
 
-	return runtime.Value{Kind: runtime.KindJSON, V: curr}, nil
+	// Wrap result in Value
+	switch v := curr.(type) {
+	case string:
+		// Convert to TEXT handle
+		return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(v)}, nil
+	case float64:
+		return runtime.Value{Kind: runtime.KindInt, V: int(v)}, nil
+	case int:
+		return runtime.Value{Kind: runtime.KindInt, V: v}, nil
+	case bool:
+		return runtime.Value{Kind: runtime.KindBool, V: v}, nil
+	case map[string]interface{}:
+		return runtime.Value{Kind: runtime.KindJSON, V: v}, nil
+	default:
+		return runtime.Value{Kind: runtime.KindJSON, V: v}, nil
+	}
 }
