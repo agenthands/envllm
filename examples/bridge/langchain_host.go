@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/agenthands/envllm/internal/ops"
@@ -20,9 +21,15 @@ type LangChainHost struct {
 }
 
 func NewLangChainHost(model llms.Model, store runtime.TextStore) *LangChainHost {
+	card, _ := os.ReadFile("assets/syntax_guide.md")
+	// If syntax guide missing, fall back to dialect card or empty
+	if len(card) == 0 {
+		card, _ = os.ReadFile("assets/dialect_card.md")
+	}
 	return &LangChainHost{
-		Model: model,
-		Store: store,
+		Model:       model,
+		Store:       store,
+		DialectCard: string(card),
 	}
 }
 
