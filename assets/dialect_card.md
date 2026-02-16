@@ -26,6 +26,7 @@ Ops:
 - CONCAT_TEXT A <TEXT> B <TEXT> INTO <TEXT>
 - TO_TEXT VALUE <any> INTO <TEXT>
 - OFFSET VALUE <INT> INTO <OFFSET>
+- OFFSET_ADD OFFSET <OFFSET> AMOUNT <INT> INTO <OFFSET>
 - SPAN START <OFFSET> END <OFFSET> INTO <SPAN>
 - GET_SPAN_START SOURCE <SPAN> INTO <OFFSET>
 - GET_SPAN_END SOURCE <SPAN> INTO <OFFSET>
@@ -36,3 +37,18 @@ Notes:
 - NO implicit conversion. Use TO_TEXT to convert OFFSET/INT to TEXT before CONCAT.
 - OFFSET is an opaque position handle. Do not use as a number.
 - If you need to transform text to JSON, use SUBCALL or JSON_PARSE.
+
+Examples:
+
+1. Declaring Capabilities:
+REQUIRES capability="fs_read"
+CELL read:
+  READ_FILE PATH "log.txt" INTO content: TEXT
+  SET_FINAL SOURCE content
+
+2. Text Slicing with Math:
+CELL slice:
+  FIND_TEXT SOURCE PROMPT NEEDLE "start" MODE FIRST IGNORE_CASE false INTO pos: OFFSET
+  OFFSET_ADD OFFSET pos AMOUNT 5 INTO start: OFFSET
+  SLICE_TEXT SOURCE PROMPT START pos END start INTO snippet: TEXT
+  SET_FINAL SOURCE snippet

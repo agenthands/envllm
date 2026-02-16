@@ -47,6 +47,7 @@ func (m *CoreModule) Operations() []Op {
 		{Name: "CONCAT_TEXT", Capabilities: []string{"pure"}, ResultType: runtime.KindText, Signature: []Param{{Kw: "A", Type: runtime.KindText}, {Kw: "B", Type: runtime.KindText}}, Into: true},
 		{Name: "TO_TEXT", Capabilities: []string{"pure"}, ResultType: runtime.KindText, Signature: []Param{{Kw: "VALUE", Type: ""}}, Into: true},
 		{Name: "OFFSET", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{{Kw: "VALUE", Type: runtime.KindInt}}, Into: true},
+		{Name: "OFFSET_ADD", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{{Kw: "OFFSET", Type: runtime.KindOffset}, {Kw: "AMOUNT", Type: runtime.KindInt}}, Into: true},
 		{Name: "SPAN", Capabilities: []string{"pure"}, ResultType: runtime.KindSpan, Signature: []Param{{Kw: "START", Type: runtime.KindOffset}, {Kw: "END", Type: runtime.KindOffset}}, Into: true},
 		{Name: "AS_SPAN", Capabilities: []string{"pure"}, ResultType: runtime.KindSpan, Signature: []Param{{Kw: "OFFSET", Type: runtime.KindOffset}, {Kw: "LEN", Type: runtime.KindInt}}, Into: true},
 		{Name: "GET_COST", Capabilities: []string{"pure"}, ResultType: runtime.KindCost, Signature: []Param{{Kw: "RESULT", Type: runtime.KindJSON}}, Into: true},
@@ -103,6 +104,9 @@ func (m *CoreModule) Handlers() map[string]OpImplementation {
 		},
 		"OFFSET": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			return pure.Offset(s, args[0].V.(int))
+		},
+		"OFFSET_ADD": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.OffsetAdd(s, args[0], args[1].V.(int))
 		},
 		"SPAN": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			return pure.Span(s, args[0].V.(int), args[1].V.(int))

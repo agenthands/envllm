@@ -288,6 +288,24 @@
       "into": true
     },
     {
+      "name": "OFFSET_ADD",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "OFFSET",
+      "signature": [
+        {
+          "kw": "OFFSET",
+          "type": "OFFSET"
+        },
+        {
+          "kw": "AMOUNT",
+          "type": "INT"
+        }
+      ],
+      "into": true
+    },
+    {
       "name": "SPAN",
       "capabilities": [
         "pure"
