@@ -5,22 +5,109 @@
 The grammar is strictly defined. Whitespace is significant (indentation).
 
 ```ebnf
-program         = { cell } ;
-cell            = "CELL", ws, ident, ":", newline, { stmt_line } ;
-stmt_line       = indent, stmt, newline ;
-indent          = "  " ; (* Exactly 2 spaces *)
+(* =========================
+   EnvLLM-DSL 0.2 — Full EBNF
+   ========================= *)
 
-stmt            = op_stmt | set_final | assert_stmt | print_stmt ;
+program         = ws, [header], ws, { cell, ws }, EOF ;
 
-op_stmt         = op_name, { ws, kw_arg }, ws, "INTO", ws, ident, [ ":", ws, type_name ] ;
-kw_arg          = kw_name, ws, expr ;
+header          = "RLMDSL", req_ws, version, line_end ;
+version         = "0.1" | "0.2" ;
 
-set_final       = "SET_FINAL", ws, "SOURCE", ws, expr ;
-assert_stmt     = "ASSERT", ws, "COND", ws, expr, ws, "MESSAGE", ws, string ;
-print_stmt      = "PRINT", ws, "SOURCE", ws, expr ;
+cell            = "CELL", req_ws, ident, ":", line_end,
+                  { stmt_line } ;
 
-expr            = literal | ident ;
-literal         = string | int | bool | "null" ;
+stmt_line       = indent, stmt, line_end ;
+
+stmt            = op_stmt
+                | set_final
+                | assert_stmt
+                | print_stmt
+                | empty_stmt ;
+
+empty_stmt      = (* empty line is allowed inside CELL *) ;
+
+(* ---------- Statements ---------- *)
+
+op_stmt         = op_name, { req_ws, kw_arg }, req_ws, "INTO", req_ws, ident, [ ":", req_ws, type_name ] ;
+
+kw_arg          = kw_name, req_ws, expr ;
+
+set_final       = "SET_FINAL", req_ws, "SOURCE", req_ws, expr ;
+
+assert_stmt     = "ASSERT", req_ws, "COND", req_ws, expr,
+                  req_ws, "MESSAGE", req_ws, string ;
+
+print_stmt      = "PRINT", req_ws, "SOURCE", req_ws, expr ;
+
+(* ---------- Expressions ---------- *)
+
+expr            = literal
+                | ident ;
+
+literal         = string
+                | int
+                | bool
+                | "null" ;
+
+(* ---------- Lexical elements ---------- *)
+
+op_name         = UIDENT ;
+kw_name         = UIDENT ;
+
+ident           = IDENT ;
+type_name       = UIDENT ;
+
+UIDENT          = UPPER, { UPPER | DIGIT | "_" } ;
+IDENT           = ( LETTER | "_" ), { LETTER | DIGIT | "_" } ;
+
+(* ---------- Literals ---------- *)
+
+int             = [ "-" ], ( "0" | ( NONZERO, { DIGIT } ) ) ;
+
+bool            = "true" | "false" ;
+
+string          = DQUOTE, { str_char }, DQUOTE ;
+
+str_char        = unescaped_char | escape_seq ;
+
+unescaped_char  = ? any Unicode scalar value except DQUOTE and backslash and line breaks ? ;
+
+escape_seq      = "\\\\"
+                | "\\\""
+                | "\\n"
+                | "\\r"
+                | "\\t"
+                | "\\u", hex, hex, hex, hex ;
+
+hex             = DIGIT | "a" | "b" | "c" | "d" | "e" | "f"
+                        | "A" | "B" | "C" | "D" | "E" | "F" ;
+
+(* ---------- Whitespace / layout ---------- *)
+
+indent          = "  " ;
+
+req_ws          = ( " " | "\t" ), { " " | "\t" } ;
+ws              = { " " | "\t" | line_end } ;
+
+line_end        = "\r\n" | "\n" ;
+
+EOF             = ? end of input ? ;
+
+(* ---------- Character classes ---------- *)
+
+UPPER           = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+                | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+                | "U" | "V" | "W" | "X" | "Y" | "Z" ;
+
+LETTER          = UPPER
+                | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+                | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+                | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+DIGIT           = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+NONZERO         = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 ```
 
 ## 2. Type System

@@ -151,18 +151,18 @@ type Policy struct {
 
 ---
 
-# 5. EBNF (Complete v0.1)
+# 5. EBNF (Complete v0.2)
 This grammar is intentionally strict and canonical (Anka-style) to ensure reliable LLM code generation.
 
 ```ebnf
 (* =========================
-   EnvLLM-DSL 0.1 — Full EBNF
+   EnvLLM-DSL 0.2 — Full EBNF
    ========================= *)
 
 program         = ws, [header], ws, { cell, ws }, EOF ;
 
 header          = "RLMDSL", req_ws, version, line_end ;
-version         = "0.1" ;
+version         = "0.1" | "0.2" ;
 
 cell            = "CELL", req_ws, ident, ":", line_end,
                   { stmt_line } ;
@@ -179,7 +179,7 @@ empty_stmt      = (* empty line is allowed inside CELL *) ;
 
 (* ---------- Statements ---------- *)
 
-op_stmt         = op_name, { req_ws, kw_arg }, req_ws, "INTO", req_ws, ident ;
+op_stmt         = op_name, { req_ws, kw_arg }, req_ws, "INTO", req_ws, ident, [ ":", req_ws, type_name ] ;
 
 kw_arg          = kw_name, req_ws, expr ;
 
@@ -206,7 +206,11 @@ op_name         = UIDENT ;
 kw_name         = UIDENT ;
 
 ident           = IDENT ;
+type_name       = UIDENT ;
 
+(* Identifiers:
+   - op/kw names are uppercase to keep parsing + generation reliable
+   - vars/cell names can be normal identifiers *)
 UIDENT          = UPPER, { UPPER | DIGIT | "_" } ;
 IDENT           = ( LETTER | "_" ), { LETTER | DIGIT | "_" } ;
 
