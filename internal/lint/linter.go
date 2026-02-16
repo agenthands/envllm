@@ -32,8 +32,21 @@ func (l *Linter) Lint(prog *ast.Program) []Error {
 			case *ast.OpStmt:
 				opErrs, outType := l.lintOpStmt(s, symbols, requiredCaps)
 				errs = append(errs, opErrs...)
-				if s.Into != "" && outType != "" {
-					symbols[s.Into] = outType
+				if s.Into != "" {
+					if _, exists := symbols[s.Into]; exists {
+						errs = append(errs, Error{
+							Code:    "LINT_VAR_REUSE_FORBIDDEN",
+							Message: fmt.Sprintf("variable %q already defined", s.Into),
+							Loc:     s.Loc,
+							Hint:    fmt.Sprintf("Rename to %s_2 or %s_step%d", s.Into, s.Into, len(symbols)),
+						})
+					} else {
+						if outType != "" {
+							symbols[s.Into] = outType
+						} else {
+							symbols[s.Into] = "UNKNOWN"
+						}
+					}
 				}
 			case *ast.SetFinalStmt:
 				errs = append(errs, l.lintExpr(s.Source, "", symbols)...)
@@ -86,6 +99,22 @@ func (l *Linter) lintOpStmt(s *ast.OpStmt, symbols map[string]string, caps map[s
 	} else {
 		for i, arg := range s.Args {
 			param := opDef.Signature[i]
+			// ... (existing order check)
+
+			// JSON Usage Check
+			if s.OpName == "JSON_GET" && param.Kw == "SOURCE" {
+				if id, ok := arg.Value.(*ast.IdentExpr); ok {
+					if typ, known := symbols[id.Name]; known && typ == "STRUCT" {
+						errs = append(errs, Error{
+							Code:    "LINT_JSON_USED_FOR_STRUCTURAL_DATA",
+							Message: fmt.Sprintf("JSON_GET used on STRUCT variable %q", id.Name),
+							Loc:     s.Loc,
+							Hint:    "Use GET_FIELD or a specialized getter (e.g. GET_COST) instead.",
+						})
+					}
+				}
+			}
+
 			if arg.Keyword != param.Kw {
 				template := l.getCanonicalTemplate(opDef)
 				errs = append(errs, Error{

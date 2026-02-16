@@ -32,6 +32,16 @@ func TestLinter(t *testing.T) {
 			"CELL test:\n  WINDOW_TEXT SOURCE PROMPT CENTER \"wrong_type\" RADIUS 10 INTO out\n",
 			true,
 		},
+		{
+			"Variable Shadowing",
+			"CELL test:\n  STATS SOURCE PROMPT INTO out\n  STATS SOURCE PROMPT INTO out\n",
+			true,
+		},
+		{
+			"JSON_GET on Struct",
+			"CELL test:\n  STATS SOURCE PROMPT INTO stats: STRUCT\n  JSON_GET SOURCE stats PATH \"cost\" INTO cost\n",
+			true,
+		},
 	}
 
 	for _, tt := range tests {
