@@ -187,6 +187,11 @@ SYSTEM INSTRUCTIONS:
 - Use the available "PROMPT" variable to access initial content.
 - Use "SET_FINAL SOURCE <expr>" when the task is complete.
 
+RECOVERY TIPS:
+- If you need to do math on an OFFSET (e.g. +1), use OFFSET_ADD. Do NOT use CONCAT.
+- If you need to read a struct field (e.g. stats.lines), use GET_FIELD. Do NOT use dot notation.
+- If you need to loop, use FOR_EACH with a LIMIT.
+
 EXAMPLE VALID OUTPUT:
 REQUIRES capability="fs_read"
 
