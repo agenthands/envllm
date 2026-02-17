@@ -56,7 +56,7 @@ func TestPureOps(t *testing.T) {
 	vj := runtime.Value{Kind: runtime.KindText, V: hj}
 	pj, _ := JSONParse(s, vj)
 	gj, _ := JSONGet(s, pj, "a.b")
-	if gj.V.(float64) != 1 {
+	if gj.V.(int) != 1 {
 		t.Errorf("expected 1, got %v", gj.V)
 	}
 

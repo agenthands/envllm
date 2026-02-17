@@ -12,6 +12,7 @@ import (
 	"github.com/agenthands/envllm/internal/ops"
 	"github.com/agenthands/envllm/internal/repl"
 	"github.com/agenthands/envllm/internal/runtime"
+	"github.com/agenthands/envllm/internal/trace"
 	"github.com/agenthands/envllm/pkg/envllm"
 )
 
@@ -61,6 +62,7 @@ func run() {
 	maxStmts := runCmd.Int("max-stmts", 100, "Maximum statements per cell")
 	timeout := runCmd.Duration("timeout", 0, "Maximum wall time for execution")
 	modeStr := runCmd.String("mode", "compat", "Parser mode (compat or strict)")
+	tracePath := runCmd.String("trace", "", "Path to emit JSONL trace certificates")
 
 	if len(os.Args) < 3 {
 		fmt.Println("Usage: envllm run <file> [flags]")
@@ -70,6 +72,17 @@ func run() {
 
 	filename := os.Args[2]
 	runCmd.Parse(os.Args[3:])
+
+	var sink trace.Sink
+	if *tracePath != "" {
+		var err error
+		sink, err = trace.NewJSONLSink(*tracePath)
+		if err != nil {
+			fmt.Printf("Trace sink error: %v\n", err)
+			os.Exit(1)
+		}
+		defer sink.Close()
+	}
 
 	mode := envllm.ModeCompat
 	if *modeStr == "strict" {
@@ -85,6 +98,13 @@ func run() {
 	prog, err := envllm.Compile(filename, string(src), mode)
 	if err != nil {
 		fmt.Printf("Compilation error: %v\n", err)
+		if sink != nil {
+			sink.Emit(trace.TraceStep{
+				Phase:    trace.PhaseParse,
+				Decision: trace.DecisionReject,
+				Error:    &trace.TraceError{Code: "PARSE_ERROR", Message: err.Error()},
+			})
+		}
 		os.Exit(1)
 	}
 
@@ -94,6 +114,7 @@ func run() {
 			MaxWallTime:     *timeout,
 		},
 		TextStore: envllm.NewTextStore(),
+		TraceSink: sink,
 	}
 
 	res, err := prog.Execute(context.Background(), opt)
@@ -133,13 +154,24 @@ func validate() {
 }
 
 func fmtCmd() {
+	fmtFlagSet := flag.NewFlagSet("fmt", flag.ExitOnError)
+	modeStr := fmtFlagSet.String("mode", "strict", "Format mode (compat or strict)")
+
 	if len(os.Args) < 3 {
-		fmt.Println("Usage: envllm fmt <file>")
+		fmt.Println("Usage: envllm fmt <file> [flags]")
+		fmtFlagSet.PrintDefaults()
 		os.Exit(1)
 	}
 	filename := os.Args[2]
+	fmtFlagSet.Parse(os.Args[3:])
+
+	mode := envllm.ModeStrict
+	if *modeStr == "compat" {
+		mode = envllm.ModeCompat
+	}
+
 	src, _ := os.ReadFile(filename)
-	prog, err := envllm.Compile(filename, string(src), envllm.ModeCompat)
+	prog, err := envllm.Compile(filename, string(src), mode)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
@@ -148,11 +180,20 @@ func fmtCmd() {
 }
 
 func migrateCmd() {
+	migrateFlagSet := flag.NewFlagSet("migrate", flag.ExitOnError)
+	from := migrateFlagSet.String("from", "v0.1", "Source version")
+	to := migrateFlagSet.String("to", "v0.2", "Target version")
+
 	if len(os.Args) < 3 {
-		fmt.Println("Usage: envllm migrate <file>")
+		fmt.Println("Usage: envllm migrate <file> [flags]")
+		migrateFlagSet.PrintDefaults()
 		os.Exit(1)
 	}
 	filename := os.Args[2]
+	migrateFlagSet.Parse(os.Args[3:])
+
+	fmt.Printf("Migrating %s from %s to %s...\n", filename, *from, *to)
+
 	src, _ := os.ReadFile(filename)
 	
 	tbl, _ := ops.LoadTable("assets/ops.json")
@@ -171,22 +212,36 @@ func migrateCmd() {
 }
 
 func checkCmd() {
+	checkFlagSet := flag.NewFlagSet("check", flag.ExitOnError)
+	modeStr := checkFlagSet.String("mode", "strict", "Check mode (compat or strict)")
+
 	if len(os.Args) < 3 {
-		fmt.Println("Usage: envllm check <file>")
+		fmt.Println("Usage: envllm check <file> [flags]")
+		checkFlagSet.PrintDefaults()
 		os.Exit(1)
 	}
+
 	filename := os.Args[2]
+	checkFlagSet.Parse(os.Args[3:])
+
+	mode := envllm.ModeStrict
+	if *modeStr == "compat" {
+		mode = envllm.ModeCompat
+	}
+
 	src, _ := os.ReadFile(filename)
-	
-	// Check starts with parsing in STRICT mode
-	prog, err := envllm.Compile(filename, string(src), envllm.ModeStrict)
+
+	prog, err := envllm.Compile(filename, string(src), mode)
 	if err != nil {
-		fmt.Printf("STRICT Parse Error: %v\n", err)
+		fmt.Printf("Parse Error (%s mode): %v\n", *modeStr, err)
 		os.Exit(1)
 	}
-	
+
 	tbl, _ := ops.LoadTable("assets/ops.json")
 	lnt := lint.NewLinter(tbl)
+	if mode == envllm.ModeStrict {
+		lnt.WithMode(lint.ModeStrict)
+	}
 	errs := lnt.Lint(prog.AST)
 	
 	if len(errs) > 0 {

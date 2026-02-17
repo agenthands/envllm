@@ -6,10 +6,21 @@ import (
 	"github.com/agenthands/envllm/internal/runtime"
 )
 
-// GetField implements GET_FIELD for Structs.
+// GetField implements GET_FIELD for Structs and Spans.
 func GetField(s *runtime.Session, source runtime.Value, field string) (runtime.Value, error) {
+	if source.Kind == runtime.KindSpan {
+		span := source.V.(runtime.Span)
+		if field == "start" {
+			return runtime.Value{Kind: runtime.KindOffset, V: span.Start}, nil
+		}
+		if field == "end" {
+			return runtime.Value{Kind: runtime.KindOffset, V: span.End}, nil
+		}
+		return runtime.Value{}, fmt.Errorf("GET_FIELD: unknown field %q for SPAN (use start or end)", field)
+	}
+
 	if source.Kind != runtime.KindStruct {
-		return runtime.Value{}, fmt.Errorf("GET_FIELD source must be STRUCT, got %s", source.Kind)
+		return runtime.Value{}, fmt.Errorf("GET_FIELD source must be STRUCT or SPAN, got %s", source.Kind)
 	}
 
 	m := source.V.(map[string]interface{})
@@ -26,9 +37,9 @@ func GetField(s *runtime.Session, source runtime.Value, field string) (runtime.V
 	// Auto-box common types
 	switch v := val.(type) {
 	case int:
-		return runtime.Value{Kind: runtime.KindInt, V: v}, nil
+		return runtime.Value{Kind: runtime.KindJSON, V: v}, nil
 	case float64:
-		return runtime.Value{Kind: runtime.KindInt, V: int(v)}, nil
+		return runtime.Value{Kind: runtime.KindJSON, V: int(v)}, nil
 	case string:
 		return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(v)}, nil
 	case bool:

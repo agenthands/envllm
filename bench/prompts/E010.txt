@@ -1,0 +1,1 @@
+Prompt index: 10. The secret value is: VALUE_1000

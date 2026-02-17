@@ -16,8 +16,9 @@ type LLMModel struct {
 	host *bridge.LangChainHost
 }
 
-func (m *LLMModel) Complete(ctx context.Context, task, prompt string) (string, error) {
+func (m *LLMModel) Complete(ctx context.Context, caseID, task, prompt string) (string, error) {
 	_ = prompt // Unused in this simple turn driver
+	_ = caseID
 	obsJSON := "{}" // Simplified for single turn completion test
 	dialectCard := m.host.DialectCard
 	
@@ -35,7 +36,7 @@ func TestBenchmarks_RealLLM(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	model, err := googleai.New(ctx, googleai.WithAPIKey(apiKey))
+	model, err := googleai.New(ctx, googleai.WithAPIKey(apiKey), googleai.WithDefaultModel("gemini-2.0-flash"))
 	if err != nil {
 		t.Fatalf("failed to create model: %v", err)
 	}

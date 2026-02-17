@@ -25,11 +25,15 @@ func NewValidator(schemaPath string) (*Validator, error) {
 
 func (v *Validator) ValidateAST(prog *ast.Program) error {
 	cellNames := make(map[string]bool)
-	for _, cell := range prog.Cells {
-		if cellNames[cell.Name] {
-			return fmt.Errorf("%s: duplicate cell name: %s", cell.Loc, cell.Name)
+	if prog.Task != nil {
+		for _, item := range prog.Task.Body {
+			if cell, ok := item.(*ast.Cell); ok {
+				if cellNames[cell.Name] {
+					return fmt.Errorf("%s: duplicate cell name: %s", cell.Loc, cell.Name)
+				}
+				cellNames[cell.Name] = true
+			}
 		}
-		cellNames[cell.Name] = true
 	}
 
 	data, err := json.Marshal(prog)

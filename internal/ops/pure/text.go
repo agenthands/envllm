@@ -83,9 +83,78 @@ func FindRegex(s *runtime.Session, source runtime.Value, pattern runtime.Value, 
 		return runtime.Value{}, fmt.Errorf("FIND_REGEX invalid pattern %q: %v", pat, err)
 	}
 
+	matches := re.FindAllStringSubmatchIndex(text, -1)
+	if len(matches) == 0 {
+		return runtime.Value{Kind: runtime.KindStruct, V: map[string]interface{}{"success": false}}, nil
+	}
+
+	var match []int
+	if mode == "FIRST" {
+		match = matches[0]
+	} else if mode == "LAST" {
+		match = matches[len(matches)-1]
+	}
+
+	// Create RegexMatch struct
+	// groups: list of spans
+	groups := []runtime.Span{}
+	for i := 0; i < len(match); i += 2 {
+		groups = append(groups, runtime.Span{Start: match[i], End: match[i+1]})
+	}
+
+	res := map[string]interface{}{
+		"success": true,
+		"span":    runtime.Span{Start: match[0], End: match[1]},
+		"groups":  groups,
+	}
+
+	return runtime.Value{Kind: runtime.KindStruct, V: res}, nil
+}
+
+// AfterText returns the offset immediately following the first/last occurrence of a needle.
+func AfterText(s *runtime.Session, source runtime.Value, needle runtime.Value, mode string, ignoreCase bool) (runtime.Value, error) {
+	h := source.V.(runtime.TextHandle)
+	text, _ := s.Stores.Text.Get(h)
+	n := needle.V.(runtime.TextHandle)
+	ntext, _ := s.Stores.Text.Get(n)
+
+	searchText := text
+	searchNeedle := ntext
+	if ignoreCase {
+		searchText = strings.ToLower(text)
+		searchNeedle = strings.ToLower(ntext)
+	}
+
+	pos := -1
+	if mode == "FIRST" {
+		pos = strings.Index(searchText, searchNeedle)
+	} else if mode == "LAST" {
+		pos = strings.LastIndex(searchText, searchNeedle)
+	}
+
+	if pos == -1 {
+		return runtime.Value{Kind: runtime.KindOffset, V: -1}, nil
+	}
+
+	return runtime.Value{Kind: runtime.KindOffset, V: pos + len(ntext)}, nil
+}
+
+// AfterRegex returns the offset immediately following the first/last match of a pattern.
+func AfterRegex(s *runtime.Session, source runtime.Value, pattern runtime.Value, mode string) (runtime.Value, error) {
+	h := source.V.(runtime.TextHandle)
+	text, _ := s.Stores.Text.Get(h)
+	
+	ph := pattern.V.(runtime.TextHandle)
+	pat, _ := s.Stores.Text.Get(ph)
+
+	re, err := regexp.Compile(pat)
+	if err != nil {
+		return runtime.Value{}, fmt.Errorf("AFTER_REGEX invalid pattern %q: %v", pat, err)
+	}
+
 	indices := re.FindAllStringIndex(text, -1)
 	if len(indices) == 0 {
-		return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: -1, End: -1}}, nil
+		return runtime.Value{Kind: runtime.KindOffset, V: -1}, nil
 	}
 
 	var match []int
@@ -95,7 +164,81 @@ func FindRegex(s *runtime.Session, source runtime.Value, pattern runtime.Value, 
 		match = indices[len(indices)-1]
 	}
 
-	return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: match[0], End: match[1]}}, nil
+	return runtime.Value{Kind: runtime.KindOffset, V: match[1]}, nil
+}
+
+// MatchGroup extracts a specific group span from a RegexMatch struct.
+func MatchGroup(s *runtime.Session, matchVal runtime.Value, index int) (runtime.Value, error) {
+	m, ok := matchVal.V.(map[string]interface{})
+	if !ok {
+		return runtime.Value{}, fmt.Errorf("MATCH_GROUP: expected RegexMatch struct")
+	}
+
+	groups, ok := m["groups"].([]runtime.Span)
+	if !ok {
+		// Try to unmarshal if it came from JSON
+		if gRaw, ok := m["groups"].([]interface{}); ok {
+			for _, gr := range gRaw {
+				if gm, ok := gr.(map[string]interface{}); ok {
+					groups = append(groups, runtime.Span{
+						Start: int(gm["start"].(float64)),
+						End:   int(gm["end"].(float64)),
+					})
+				}
+			}
+		} else {
+			return runtime.Value{}, fmt.Errorf("MATCH_GROUP: invalid groups in RegexMatch")
+		}
+	}
+
+	if index < 0 || index >= len(groups) {
+		return runtime.Value{}, fmt.Errorf("MATCH_GROUP: index %d out of bounds (len=%d)", index, len(groups))
+	}
+
+	return runtime.Value{Kind: runtime.KindSpan, V: groups[index]}, nil
+}
+
+// CaptureRegexGroup is a one-shot helper to find a pattern and return a specific group span.
+func CaptureRegexGroup(s *runtime.Session, source runtime.Value, pattern runtime.Value, index int) (runtime.Value, error) {
+	match, err := FindRegex(s, source, pattern, "FIRST")
+	if err != nil {
+		return runtime.Value{}, err
+	}
+	m := match.V.(map[string]interface{})
+	if success, ok := m["success"].(bool); !ok || !success {
+		return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: -1, End: -1}}, nil
+	}
+	return MatchGroup(s, match, index)
+}
+
+// ValueAfterDelim finds a delimiter and returns the span until a secondary delimiter.
+func ValueAfterDelim(s *runtime.Session, source runtime.Value, delim runtime.Value, until runtime.Value) (runtime.Value, error) {
+	startOff, err := AfterText(s, source, delim, "FIRST", false)
+	if err != nil {
+		return runtime.Value{}, err
+	}
+	start := startOff.V.(int)
+	if start == -1 {
+		return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: -1, End: -1}}, nil
+	}
+
+	h := source.V.(runtime.TextHandle)
+	text, _ := s.Stores.Text.Get(h)
+	
+	uh := until.V.(runtime.TextHandle)
+	utext, _ := s.Stores.Text.Get(uh)
+
+	re, err := regexp.Compile(utext)
+	if err != nil {
+		return runtime.Value{}, err
+	}
+
+	loc := re.FindStringIndex(text[start:])
+	if loc == nil {
+		return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: start, End: len(text)}}, nil
+	}
+
+	return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: start, End: start + loc[0]}}, nil
 }
 
 // GetSpanStart implements the GET_SPAN_START operation.

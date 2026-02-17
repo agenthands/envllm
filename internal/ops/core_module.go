@@ -33,10 +33,35 @@ func (m *CoreModule) Operations() []Op {
 			{Kw: "START", Type: runtime.KindOffset},
 			{Kw: "END", Type: runtime.KindOffset},
 		}, Into: true},
-		{Name: "FIND_REGEX", Capabilities: []string{"pure"}, ResultType: runtime.KindSpan, Signature: []Param{
+		{Name: "FIND_REGEX", Capabilities: []string{"pure"}, ResultType: runtime.KindStruct, Signature: []Param{
 			{Kw: "SOURCE", Type: runtime.KindText},
 			{Kw: "PATTERN", Type: runtime.KindText},
 			{Kw: "MODE", Enum: []string{"FIRST", "LAST"}},
+		}, Into: true},
+		{Name: "AFTER_TEXT", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{
+			{Kw: "SOURCE", Type: runtime.KindText},
+			{Kw: "NEEDLE", Type: runtime.KindText},
+			{Kw: "MODE", Enum: []string{"FIRST", "LAST"}},
+			{Kw: "IGNORE_CASE", Type: runtime.KindBool},
+		}, Into: true},
+		{Name: "AFTER_REGEX", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{
+			{Kw: "SOURCE", Type: runtime.KindText},
+			{Kw: "PATTERN", Type: runtime.KindText},
+			{Kw: "MODE", Enum: []string{"FIRST", "LAST"}},
+		}, Into: true},
+		{Name: "MATCH_GROUP", Capabilities: []string{"pure"}, ResultType: runtime.KindSpan, Signature: []Param{
+			{Kw: "MATCH", Type: runtime.KindStruct},
+			{Kw: "INDEX", Type: runtime.KindInt},
+		}, Into: true},
+		{Name: "CAPTURE_REGEX_GROUP", Capabilities: []string{"pure"}, ResultType: runtime.KindSpan, Signature: []Param{
+			{Kw: "SOURCE", Type: runtime.KindText},
+			{Kw: "PATTERN", Type: runtime.KindText},
+			{Kw: "INDEX", Type: runtime.KindInt},
+		}, Into: true},
+		{Name: "VALUE_AFTER_DELIM", Capabilities: []string{"pure"}, ResultType: runtime.KindSpan, Signature: []Param{
+			{Kw: "SOURCE", Type: runtime.KindText},
+			{Kw: "DELIM", Type: runtime.KindText},
+			{Kw: "UNTIL", Type: runtime.KindText},
 		}, Into: true},
 		{Name: "JSON_PARSE", Capabilities: []string{"pure"}, ResultType: runtime.KindJSON, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindText}}, Into: true},
 		{Name: "JSON_GET", Capabilities: []string{"pure"}, ResultType: runtime.KindJSON, Signature: []Param{
@@ -88,6 +113,27 @@ func (m *CoreModule) Handlers() map[string]OpImplementation {
 			mode := "FIRST"
 			if m, ok := args[2].V.(string); ok { mode = m }
 			return pure.FindRegex(s, args[0], args[1], mode)
+		},
+		"AFTER_TEXT": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			mode := "FIRST"
+			if m, ok := args[2].V.(string); ok { mode = m }
+			ignoreCase := false
+			if ic, ok := args[3].V.(bool); ok { ignoreCase = ic }
+			return pure.AfterText(s, args[0], args[1], mode, ignoreCase)
+		},
+		"AFTER_REGEX": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			mode := "FIRST"
+			if m, ok := args[2].V.(string); ok { mode = m }
+			return pure.AfterRegex(s, args[0], args[1], mode)
+		},
+		"MATCH_GROUP": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.MatchGroup(s, args[0], args[1].V.(int))
+		},
+		"CAPTURE_REGEX_GROUP": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.CaptureRegexGroup(s, args[0], args[1], args[2].V.(int))
+		},
+		"VALUE_AFTER_DELIM": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.ValueAfterDelim(s, args[0], args[1], args[2])
 		},
 		"JSON_PARSE": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			return pure.JSONParse(s, args[0])

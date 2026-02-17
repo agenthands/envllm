@@ -162,12 +162,28 @@ func lookupIdent(ident string) Type {
 		return TypeREQUIRES
 	case "capability":
 		return TypeCapability
+	case "DIALECT":
+		return TypeDIALECT
+	case "EXT":
+		return TypeEXT
 	case "FOR_EACH":
 		return TypeFOR_EACH
 	case "IN":
 		return TypeIN
 	case "LIMIT":
 		return TypeLIMIT
+	case "TASK":
+		return TypeTASK
+	case "INPUT":
+		return TypeINPUT
+	case "OUTPUT":
+		return TypeOUTPUT
+	case "IF":
+		return TypeIF
+	case "ELSE":
+		return TypeELSE
+	case "END":
+		return TypeEND
 	case "true", "false":
 		return TypeBool
 	case "null":

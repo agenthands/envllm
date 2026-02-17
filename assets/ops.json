@@ -6,10 +6,28 @@
       "capabilities": [
         "pure"
       ],
-      "result_type": "JSON",
+      "result_type": "STRUCT",
       "signature": [
         {
           "kw": "SOURCE",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "GET_FIELD",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "STRUCT"
+        },
+        {
+          "kw": "FIELD",
           "type": "TEXT"
         }
       ],
@@ -147,7 +165,7 @@
       "capabilities": [
         "pure"
       ],
-      "result_type": "SPAN",
+      "result_type": "STRUCT",
       "signature": [
         {
           "kw": "SOURCE",
@@ -163,6 +181,122 @@
             "FIRST",
             "LAST"
           ]
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "AFTER_TEXT",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "OFFSET",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "NEEDLE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "MODE",
+          "enum": [
+            "FIRST",
+            "LAST"
+          ]
+        },
+        {
+          "kw": "IGNORE_CASE",
+          "type": "BOOL"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "AFTER_REGEX",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "OFFSET",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "PATTERN",
+          "type": "TEXT"
+        },
+        {
+          "kw": "MODE",
+          "enum": [
+            "FIRST",
+            "LAST"
+          ]
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "MATCH_GROUP",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "SPAN",
+      "signature": [
+        {
+          "kw": "MATCH",
+          "type": "STRUCT"
+        },
+        {
+          "kw": "INDEX",
+          "type": "INT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "CAPTURE_REGEX_GROUP",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "SPAN",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "PATTERN",
+          "type": "TEXT"
+        },
+        {
+          "kw": "INDEX",
+          "type": "INT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "VALUE_AFTER_DELIM",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "SPAN",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "DELIM",
+          "type": "TEXT"
+        },
+        {
+          "kw": "UNTIL",
+          "type": "TEXT"
         }
       ],
       "into": true

@@ -26,6 +26,9 @@ func JSONParse(s *runtime.Session, source runtime.Value) (runtime.Value, error) 
 func JSONGet(s *runtime.Session, source runtime.Value, path string) (runtime.Value, error) {
 	data := source.V
 	
+	// Strip optional $. prefix (common LLM hallucination)
+	path = strings.TrimPrefix(path, "$.")
+	
 	parts := strings.Split(path, ".")
 	curr := data
 	
@@ -50,19 +53,5 @@ func JSONGet(s *runtime.Session, source runtime.Value, path string) (runtime.Val
 	}
 
 	// Wrap result in Value
-	switch v := curr.(type) {
-	case string:
-		// Convert to TEXT handle
-		return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(v)}, nil
-	case float64:
-		return runtime.Value{Kind: runtime.KindInt, V: int(v)}, nil
-	case int:
-		return runtime.Value{Kind: runtime.KindInt, V: v}, nil
-	case bool:
-		return runtime.Value{Kind: runtime.KindBool, V: v}, nil
-	case map[string]interface{}:
-		return runtime.Value{Kind: runtime.KindJSON, V: v}, nil
-	default:
-		return runtime.Value{Kind: runtime.KindJSON, V: v}, nil
-	}
+	return runtime.Value{Kind: runtime.KindJSON, V: curr}, nil
 }

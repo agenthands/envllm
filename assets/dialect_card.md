@@ -1,54 +1,62 @@
-# EnvLLM-DSL Dialect Card (prepend to the LLM)
+# EnvLLM-DSL Dialect Card (v0.2.3)
 Output ONLY valid EnvLLM-DSL 0.2 code.
 
-Rules:
-- Use CELL blocks.
-- Every OP line ends with INTO <var>: <Type>.
-- Keyword order must match ops.json.
-- Never reuse a variable name.
-- Literals: "string", 123, true, false, null.
-- Indentation: exactly 2 spaces per statement.
-- Types: TEXT, INT, OFFSET, SPAN, BOOL, JSON.
+### **Mandatory Structure**
+Every program MUST follow this block hierarchy:
+1. `RLMDSL 0.2` (Header)
+2. `TASK <name>:` (The container)
+3. `  INPUT <name>: <Type>` (Optional inputs)
+4. `  REQUIRES capability="<cap>"` (Optional security declarations)
+5. `  CELL <name>:` (Execution blocks)
+6. `    <OP> ... INTO <var>: <Type>` (Indented statements)
+7. `  OUTPUT <var>` (Final return value)
 
-Ops:
-- STATS SOURCE <TEXT> INTO <JSON>
-  - Returns: {"bytes": INT, "lines": INT}
-- FIND_TEXT SOURCE <TEXT> NEEDLE <TEXT> MODE FIRST|LAST IGNORE_CASE true|false INTO <OFFSET>
-- WINDOW_TEXT SOURCE <TEXT> CENTER <OFFSET> RADIUS <INT> INTO <TEXT>
-- SLICE_TEXT SOURCE <TEXT> START <OFFSET> END <OFFSET> INTO <TEXT>
-- JSON_PARSE SOURCE <TEXT> INTO <JSON>
-- JSON_GET SOURCE <JSON> PATH <TEXT> INTO <JSON>
-- SUBCALL SOURCE <TEXT> TASK <TEXT> DEPTH_COST <INT> INTO <JSON>
-- FIND_REGEX SOURCE <TEXT> PATTERN <TEXT> MODE FIRST|LAST INTO <SPAN>
-- READ_FILE PATH <TEXT> INTO <TEXT>
-- WRITE_FILE PATH <TEXT> SOURCE <TEXT> INTO <BOOL>
-- LIST_DIR PATH <TEXT> INTO <JSON>
-- CONCAT_TEXT A <TEXT> B <TEXT> INTO <TEXT>
-- TO_TEXT VALUE <any> INTO <TEXT>
-- OFFSET VALUE <INT> INTO <OFFSET>
-- OFFSET_ADD OFFSET <OFFSET> AMOUNT <INT> INTO <OFFSET>
-- SPAN START <OFFSET> END <OFFSET> INTO <SPAN>
-- GET_SPAN_START SOURCE <SPAN> INTO <OFFSET>
-- GET_SPAN_END SOURCE <SPAN> INTO <OFFSET>
+### **Strict Rules**
+- **Indentation**: Exactly 2 spaces for top-level (INPUT/CELL), exactly 4 spaces for statements inside a CELL.
+- **Explicit Types**: Every `INTO <var>` must be followed by `: <Type>` (TEXT, INT, OFFSET, SPAN, BOOL, JSON, STRUCT).
+- **No Variable Reuse**: Every `INTO` must use a unique variable name.
+- **NO HARDCODED OFFSETS**: Never use `OFFSET VALUE 123`. Use `FIND_TEXT` or `FIND_REGEX`.
+- **Keyword order**: Must match the operation signature exactly.
 
-Notes:
-- NO string concatenation with '+'. Use CONCAT_TEXT.
-- NO property access with '.'. Use JSON_GET or GET_SPAN_START.
-- NO implicit conversion. Use TO_TEXT to convert OFFSET/INT to TEXT before CONCAT.
-- OFFSET is an opaque position handle. Do not use as a number.
-- If you need to transform text to JSON, use SUBCALL or JSON_PARSE.
+### **Common Operations**
+- `STATS SOURCE <TEXT> INTO <var>: STRUCT`
+- `GET_FIELD SOURCE <STRUCT> FIELD <TEXT> INTO <var>: JSON`
+- `FIND_TEXT SOURCE <TEXT> NEEDLE <TEXT> MODE FIRST|LAST IGNORE_CASE true|false INTO <var>: OFFSET`
+- `WINDOW_TEXT SOURCE <TEXT> CENTER <OFFSET> RADIUS <INT> INTO <var>: TEXT`
+- `SLICE_TEXT SOURCE <TEXT> START <OFFSET> END <OFFSET> INTO <var>: TEXT`
+- `JSON_PARSE SOURCE <TEXT> INTO <var>: JSON`
+- `JSON_GET SOURCE <JSON> PATH <TEXT> INTO <var>: JSON`
+- `SUBCALL SOURCE <TEXT> TASK <TEXT> DEPTH_COST <INT> INTO <var>: JSON`
+- `FIND_REGEX SOURCE <TEXT> PATTERN <TEXT> MODE FIRST|LAST INTO <var>: SPAN`
+- `GET_SPAN_START SOURCE <SPAN> INTO <var>: OFFSET`
+- `GET_SPAN_END SOURCE <SPAN> INTO <var>: OFFSET`
+- `TO_TEXT VALUE <any> INTO <var>: TEXT`
+- `OFFSET_ADD OFFSET <OFFSET> AMOUNT <INT> INTO <var>: OFFSET`
 
-Examples:
+### **Examples**
 
-1. Declaring Capabilities:
-REQUIRES capability="fs_read"
-CELL read:
-  READ_FILE PATH "log.txt" INTO content: TEXT
-  SET_FINAL SOURCE content
+1. **Extraction Task:**
+RLMDSL 0.2
+TASK get_price:
+  INPUT PROMPT: TEXT
+  CELL search:
+    FIND_TEXT SOURCE PROMPT NEEDLE "$" MODE FIRST IGNORE_CASE false INTO p_pos: OFFSET
+    FIND_REGEX SOURCE PROMPT PATTERN "[0-9.]+" MODE FIRST INTO p_span: SPAN
+  CELL extraction:
+    GET_SPAN_START SOURCE p_span INTO p_start: OFFSET
+    GET_SPAN_END SOURCE p_span INTO p_end: OFFSET
+    SLICE_TEXT SOURCE PROMPT START p_start END p_end INTO price: TEXT
+  OUTPUT price
 
-2. Text Slicing with Math:
-CELL slice:
-  FIND_TEXT SOURCE PROMPT NEEDLE "start" MODE FIRST IGNORE_CASE false INTO pos: OFFSET
-  OFFSET_ADD OFFSET pos AMOUNT 5 INTO start: OFFSET
-  SLICE_TEXT SOURCE PROMPT START pos END start INTO snippet: TEXT
-  SET_FINAL SOURCE snippet
+3. **Substring Extraction (Precision):**
+RLMDSL 0.2
+TASK extract_value:
+  INPUT PROMPT: TEXT
+  CELL search:
+    FIND_TEXT SOURCE PROMPT NEEDLE "value is: " MODE FIRST IGNORE_CASE false INTO label_pos: OFFSET
+    -- Offset by length of "value is: " (10 chars)
+    OFFSET_ADD OFFSET label_pos AMOUNT 10 INTO start_pos: OFFSET
+    FIND_TEXT SOURCE PROMPT NEEDLE " " MODE FIRST IGNORE_CASE false INTO space_pos: OFFSET
+  CELL slice:
+    SLICE_TEXT SOURCE PROMPT START start_pos END space_pos INTO secret: TEXT
+  OUTPUT secret

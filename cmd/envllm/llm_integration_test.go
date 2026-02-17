@@ -24,14 +24,14 @@ func TestLLMIntegration_Gemini(t *testing.T) {
 	// Attempt to use a stronger model if available, or default.
 	// langchaingo/llms/googleai defaults to gemini-pro.
 	// We can specify model via option.
-	model, err := googleai.New(ctx, googleai.WithAPIKey(apiKey), googleai.WithDefaultModel("gemini-1.5-pro"))
+	model, err := googleai.New(ctx, googleai.WithAPIKey(apiKey), googleai.WithDefaultModel("gemini-2.0-flash"))
 	if err != nil {
 		t.Fatalf("failed to create googleai model: %v", err)
 	}
 
 	ts := store.NewTextStore()
 	host := bridge.NewLangChainHost(model, ts)
-	card, err := os.ReadFile("../../assets/dialect_card.md")
+	card, err := os.ReadFile("../../assets/syntax_guide.md")
 	if err != nil {
 		t.Fatalf("failed to read dialect card: %v", err)
 	}

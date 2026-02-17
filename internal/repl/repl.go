@@ -52,7 +52,7 @@ func Start(in io.Reader, out io.Writer) {
 		// Parse as a cell
 		// Add CELL wrapper if not present
 		src := line
-		if !strings.HasPrefix(line, "CELL") && !strings.HasPrefix(line, "RLMDSL") {
+		if !strings.HasPrefix(line, "TASK") && !strings.HasPrefix(line, "CELL") && !strings.HasPrefix(line, "RLMDSL") {
 			src = "CELL repl:\n  " + line + "\n"
 		}
 
@@ -64,8 +64,8 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 
-		for _, cell := range prog.Cells {
-			err = session.ExecuteCell(context.Background(), cell)
+		if prog.Task != nil {
+			err = session.ExecuteTask(context.Background(), prog.Task)
 			status := "ok"
 			var errs []runtime.Error
 			if err != nil {

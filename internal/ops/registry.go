@@ -74,6 +74,8 @@ func (r *Registry) Dispatch(s *runtime.Session, name string, args []ast.KwArg) (
 		return runtime.Value{}, err
 	}
 
+	// fmt.Printf("[DEBUG] Dispatch %s, Caps: %v, Policy: %v\n", name, op.Capabilities, s.Policy.AllowedCapabilities)
+
 	// 2. Check capabilities
 	for _, cap := range op.Capabilities {
 		if cap == "pure" {

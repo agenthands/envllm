@@ -1,0 +1,11 @@
+RLMDSL 0.2
+DIALECT envllm=0.2
+
+TASK smoke_test:
+  INPUT url: TEXT
+  
+  CELL start:
+    STATS SOURCE url INTO stats: STRUCT
+    PRINT SOURCE stats
+    
+  OUTPUT stats

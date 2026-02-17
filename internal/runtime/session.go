@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/agenthands/envllm/internal/ast"
+	"github.com/agenthands/envllm/internal/trace"
 )
 
 type BudgetExceededError struct {
@@ -21,6 +22,16 @@ type CapabilityDeniedError struct {
 }
 
 func (e *CapabilityDeniedError) Error() string { return e.Message }
+
+type ExtensionVersionUnsupportedError struct {
+	Extension string
+	Requested string
+	Available string
+}
+
+func (e *ExtensionVersionUnsupportedError) Error() string {
+	return fmt.Sprintf("ERR_EXTENSION_VERSION_UNSUPPORTED: %s (requested %s, available %s)", e.Extension, e.Requested, e.Available)
+}
 
 // TextStore interface.
 type TextStore interface {
@@ -93,6 +104,20 @@ type Session struct {
 	Dispatcher OpDispatcher
 	// Host
 	Host Host
+	// Trace Sink
+	TraceSink trace.Sink
+}
+
+func (s *Session) emitTrace(step trace.TraceStep) {
+	if s.TraceSink != nil {
+		if step.Timestamp.IsZero() {
+			step.Timestamp = time.Now()
+		}
+		if step.Phase == "" {
+			step.Phase = trace.PhaseExec
+		}
+		s.TraceSink.Emit(step)
+	}
 }
 
 func NewSession(policy Policy, ts TextStore) *Session {
@@ -172,6 +197,74 @@ func (s *Session) GenerateResult(status string, errors []Error) ExecResult {
 	}
 	
 	return res
+}
+
+// ExecuteTask runs a full task including inputs and body.
+func (s *Session) ExecuteTask(ctx context.Context, task *ast.Task) error {
+	s.StartTime = time.Now()
+	// Inputs are assumed to be pre-set in Env for now, 
+	// but we could validate them against task.Inputs here.
+	
+	if err := s.ExecuteBody(ctx, task.Body); err != nil {
+		return err
+	}
+	
+	// Final output check
+	if task.Output != "" {
+		val, ok := s.Env.Get(task.Output)
+		if !ok {
+			return fmt.Errorf("task output %q not found in environment", task.Output)
+		}
+		s.Final = &val
+	}
+	
+	return nil
+}
+
+// ExecuteBody runs a sequence of body items.
+func (s *Session) ExecuteBody(ctx context.Context, body []ast.BodyItem) error {
+	for _, item := range body {
+		if err := s.ExecuteBodyItem(ctx, item); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ExecuteBodyItem runs a single requirement, cell, or if statement.
+func (s *Session) ExecuteBodyItem(ctx context.Context, item ast.BodyItem) error {
+	switch it := item.(type) {
+	case *ast.Requirement:
+		// Requirements are currently just metadata for the linter/host.
+		// Runtime can ignore them or validate against policy.
+		return nil
+	case *ast.Cell:
+		return s.ExecuteCell(ctx, it)
+	case *ast.IfStmt:
+		return s.ExecuteIf(ctx, it)
+	case ast.Stmt:
+		return s.ExecuteStmt(ctx, it)
+	default:
+		return fmt.Errorf("unknown body item type: %T", item)
+	}
+}
+
+// ExecuteIf runs an IF/ELSE block.
+func (s *Session) ExecuteIf(ctx context.Context, stmt *ast.IfStmt) error {
+	val, err := s.EvalExpr(stmt.Cond)
+	if err != nil {
+		return err
+	}
+	if val.Kind != KindBool {
+		return fmt.Errorf("IF condition must be BOOL, got %s", val.Kind)
+	}
+	
+	if val.V.(bool) {
+		return s.ExecuteBody(ctx, stmt.ThenBody)
+	} else if stmt.ElseBody != nil {
+		return s.ExecuteBody(ctx, stmt.ElseBody)
+	}
+	return nil
 }
 
 // ExecuteCell runs all statements in a cell.
@@ -264,11 +357,22 @@ func (s *Session) ExecuteStmt(ctx context.Context, stmt ast.Stmt) error {
 		}
 	case *ast.OpStmt:
 		if s.Dispatcher == nil {
-			return fmt.Errorf("no operation dispatcher configured")
+			err := fmt.Errorf("no operation dispatcher configured")
+			s.emitTrace(trace.TraceStep{
+				Op:       st.OpName,
+				Decision: trace.DecisionReject,
+				Error:    &trace.TraceError{Code: "DISPATCH_ERROR", Message: err.Error()},
+			})
+			return err
 		}
 		
 		res, err := s.Dispatcher.Dispatch(s, st.OpName, st.Args)
 		if err != nil {
+			s.emitTrace(trace.TraceStep{
+				Op:       st.OpName,
+				Decision: trace.DecisionReject,
+				Error:    &trace.TraceError{Code: "EXEC_ERROR", Message: err.Error()},
+			})
 			return err
 		}
 		
@@ -279,6 +383,12 @@ func (s *Session) ExecuteStmt(ctx context.Context, stmt ast.Stmt) error {
 			}
 		}
 		
+		s.emitTrace(trace.TraceStep{
+			Op:       st.OpName,
+			Decision: trace.DecisionAccept,
+			Outputs:  map[string]interface{}{st.Into: res.Kind},
+		})
+
 		// Record event
 		s.Events = append(s.Events, Event{
 			T:    "op",

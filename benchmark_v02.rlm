@@ -1,0 +1,50 @@
+Migrating testdata/v0.1/benchmark_patterns.rlm from v0.1 to v0.2...
+--- Migration Report ---
+- RULE_MISSING_REQUIRES
+
+--- Canonical STRICT Form ---
+RLMDSL 0.2
+
+TASK default:
+  REQUIRES capability="fs_read"
+  REQUIRES capability="llm"
+  CELL parse_basic:
+    PRINT SOURCE "hello"
+    SET_FINAL SOURCE true
+  CELL indent_wrong:
+    PRINT SOURCE "wrong"
+  CELL literals:
+    PRINT SOURCE null
+    SET_FINAL SOURCE -42
+  CELL escapes:
+    SET_FINAL SOURCE "line1\nline2\ttab"
+  CELL budget:
+    PRINT SOURCE 1
+    PRINT SOURCE 2
+    PRINT SOURCE 3
+  CELL safety:
+    READ_FILE PATH "/etc/passwd" INTO out
+    SET_FINAL SOURCE out
+  CELL recursion:
+    SUBCALL SOURCE PROMPT TASK "recursive" DEPTH_COST 10 INTO out
+    SET_FINAL SOURCE out
+  CELL credentials:
+    JSON_PARSE SOURCE "{\"user\": \"admin\", \"pass\": \"hunter2\"}" INTO out
+    SET_FINAL SOURCE out
+  CELL find_error:
+    FIND_TEXT SOURCE PROMPT NEEDLE "ERROR" MODE FIRST IGNORE_CASE false INTO pos
+    ASSERT COND true MESSAGE "Found error"
+    SET_FINAL SOURCE pos
+  CELL config_extract:
+    FIND_REGEX SOURCE PROMPT PATTERN "\\{.*\\}" MODE FIRST INTO span
+    GET_SPAN_START SOURCE span INTO start
+    GET_SPAN_END SOURCE span INTO end
+    SLICE_TEXT SOURCE PROMPT START start END end INTO snippet
+    JSON_PARSE SOURCE snippet INTO cfg
+    SET_FINAL SOURCE cfg
+  CELL recursive_summary:
+    FIND_TEXT SOURCE PROMPT NEEDLE "Chapter 1" MODE FIRST IGNORE_CASE true INTO p1
+    WINDOW_TEXT SOURCE PROMPT CENTER p1 RADIUS 100 INTO s1
+    SUBCALL SOURCE s1 TASK "Summarize chapter 1" DEPTH_COST 1 INTO r1
+    SET_FINAL SOURCE r1
+  OUTPUT 

@@ -41,8 +41,14 @@ TASK: %s
 CONTEXT: %s
 
 You are in a recursive SUBCALL. 
-Produce a single CELL that solves this specific task and ends with SET_FINAL SOURCE <result>.
-Use ONLY valid EnvLLM-DSL 0.1.
+Produce a TASK block that solves this specific task.
+Example:
+TASK sub_task:
+  INPUT PROMPT: TEXT
+  CELL main:
+    ...
+    SET_FINAL SOURCE result
+  OUTPUT result
 `, h.DialectCard, req.Task, h.resolveHandle(req.Source))
 
 	completion, err := llms.GenerateFromSinglePrompt(ctx, h.Model, prompt)
@@ -50,7 +56,7 @@ Use ONLY valid EnvLLM-DSL 0.1.
 		return runtime.SubcallResponse{}, err
 	}
 
-	dslCode := h.stripMarkdown(completion)
+	dslCode := h.StripMarkdown(completion)
 	
 	// Execute the returned DSL in a nested session
 	ts := envllm.NewTextStore()
@@ -90,6 +96,7 @@ func (h *LangChainHost) resolveHandle(handle runtime.TextHandle) string {
 	return text
 }
 
+// RunSession executes the RLM loop until completion or error.
 func (h *LangChainHost) RunSession(ctx context.Context, task string, ph runtime.TextHandle, policy runtime.Policy) (runtime.ExecResult, error) {
 	s := runtime.NewSession(policy, h.Store)
 	s.Host = h
@@ -116,31 +123,53 @@ func (h *LangChainHost) RunSession(ctx context.Context, task string, ph runtime.
 
 		prompt := FormatPrompt(h.DialectCard, task, string(obsJSON))
 
-		completion, err := llms.GenerateFromSinglePrompt(ctx, h.Model, prompt)
+		// Request JSON structured output to avoid markdown pollution
+		// Using langchaingo's options for JSON response format
+		var completion string
+		
+		jsonPrompt := fmt.Sprintf("%s\n\nReturn your response as a JSON object with two fields:\n1. \"reasoning\": string (your internal thoughts)\n2. \"code\": string (the EnvLLM-DSL v0.2 code)", prompt)
+
+		completion, err = llms.GenerateFromSinglePrompt(ctx, h.Model, jsonPrompt, llms.WithJSONMode())
 		if err != nil {
-			return obs, err
-		}
-
-		dslCode := h.stripMarkdown(completion)
-		dslCode = h.cleanDSL(dslCode)
-		fmt.Printf("--- Turn %d LLM Output ---\n%s\n------------------------\n", i, dslCode)
-
-		prog, err := envllm.Compile(fmt.Sprintf("turn_%d.rlm", i), dslCode, envllm.ModeCompat)
-		if err != nil {
-			return obs, fmt.Errorf("turn %d: DSL compilation failed: %v\nCode:\n%s", i, err, dslCode)
-		}
-
-		for _, cell := range prog.AST.Cells {
-			if err := s.ExecuteCell(ctx, cell); err != nil {
-				return s.GenerateResult("error", []runtime.Error{{Code: "EXEC_ERROR", Message: err.Error()}}), nil
+			// Fallback if WithJSONMode fails
+			completion, err = llms.GenerateFromSinglePrompt(ctx, h.Model, jsonPrompt)
+			if err != nil {
+				return obs, err
 			}
+		}
+
+		// Parse JSON response
+		var response struct {
+			Reasoning string `json:"reasoning"`
+			Code      string `json:"code"`
+		}
+		
+		var prog *envllm.Program
+		if err := json.Unmarshal([]byte(h.StripMarkdown(completion)), &response); err != nil {
+			// Fallback: try to treat the whole completion as raw DSL if JSON parsing fails
+			dslCode := h.StripMarkdown(completion)
+			dslCode = h.CleanDSL(dslCode)
+			fmt.Printf("--- Turn %d LLM Raw Output (JSON Parse Failed) ---\n%s\n------------------------\n", i, dslCode)
+			prog, err = envllm.Compile(fmt.Sprintf("turn_%d.rlm", i), dslCode, envllm.ModeCompat)
+		} else {
+			fmt.Printf("--- Turn %d LLM Reasoning ---\n%s\n------------------------\n", i, response.Reasoning)
+			fmt.Printf("--- Turn %d LLM DSL Code ---\n%s\n------------------------\n", i, response.Code)
+			prog, err = envllm.Compile(fmt.Sprintf("turn_%d.rlm", i), response.Code, envllm.ModeCompat)
+		}
+
+		if err != nil {
+			return obs, fmt.Errorf("turn %d: DSL compilation failed: %v", i, err)
+		}
+
+		if err := s.ExecuteTask(ctx, prog.AST.Task); err != nil {
+			return s.GenerateResult("error", []runtime.Error{{Code: "EXEC_ERROR", Message: err.Error()}}), nil
 		}
 	}
 
 	return s.GenerateResult("error", []runtime.Error{{Code: "TIMEOUT", Message: "Max turns reached"}}), nil
 }
 
-func (h *LangChainHost) cleanDSL(s string) string {
+func (h *LangChainHost) CleanDSL(s string) string {
 	lines := strings.Split(s, "\n")
 	var cleaned []string
 	for _, line := range lines {
@@ -153,7 +182,7 @@ func (h *LangChainHost) cleanDSL(s string) string {
 	return strings.Join(cleaned, "\n")
 }
 
-func (h *LangChainHost) stripMarkdown(s string) string {
+func (h *LangChainHost) StripMarkdown(s string) string {
 	s = strings.TrimSpace(s)
 	if strings.Contains(s, "```") {
 		// Find first occurrence of ``` and last occurrence of ```
@@ -166,6 +195,10 @@ func (h *LangChainHost) stripMarkdown(s string) string {
 				content = content[3:]
 			} else if strings.HasPrefix(content, "text") {
 				content = content[4:]
+			} else if strings.HasPrefix(content, "json") {
+				content = content[4:]
+			} else if strings.HasPrefix(content, "envllm") {
+				content = content[6:]
 			}
 			return strings.TrimSpace(content)
 		}
@@ -179,18 +212,25 @@ func FormatPrompt(dialectCard, task, obsJSON string) string {
 SYSTEM INSTRUCTIONS:
 - You are an EnvLLM Agent.
 - Your task is: %s
-- You communicate ONLY by emitting EnvLLM-DSL 0.2 code.
-- Declare required capabilities using "REQUIRES capability=..." at the VERY TOP, BEFORE any CELL.
-- Then define one "CELL <name>:" block.
-- Every statement inside the CELL must be indented by EXACTLY 2 spaces.
-- NO line numbers, NO preambles, NO conversational text, NO "NEXT CELL:".
+- You communicate ONLY by emitting EnvLLM-DSL 0.2.3 code.
+- Your code MUST follow this structure:
+  TASK <name>:
+    [INPUT <name>: <Type>]
+    [REQUIRES capability="..."]
+    [CELL <name>: ...]
+    [IF <expr>: ...]
+    OUTPUT <name>
+- Declare required capabilities using "REQUIRES capability=..." at the top of the TASK body.
+- One capability per REQUIRES line. DO NOT use commas to separate capabilities.
+- Use "SET_FINAL SOURCE <expr>" to set the final result.
+- NO line numbers, NO preambles, NO conversational text.
 - Use the available "PROMPT" variable to access initial content.
-- Use "SET_FINAL SOURCE <expr>" when the task is complete.
 
 RECOVERY TIPS:
 - If you need to do math on an OFFSET (e.g. +1), use OFFSET_ADD. Do NOT use CONCAT.
 - If you need to read a struct field (e.g. stats.lines), use GET_FIELD. Do NOT use dot notation.
 - If you need to loop, use FOR_EACH with a LIMIT.
+- If the PROMPT contains text and JSON, use FIND_TEXT and SLICE_TEXT to isolate the JSON before using JSON_PARSE.
 - CAPABILITY MAPPING:
   - SUBCALL -> capability="llm"
   - READ_FILE -> capability="fs_read"
@@ -198,11 +238,15 @@ RECOVERY TIPS:
   - LIST_DIR -> capability="fs_read"
 
 EXAMPLE VALID OUTPUT:
-REQUIRES capability="fs_read"
+TASK find_data:
+  INPUT PROMPT: TEXT
+  REQUIRES capability="fs_read"
 
-CELL find_data:
-  READ_FILE PATH "data.txt" INTO content: TEXT
-  SET_FINAL SOURCE content
+  CELL read:
+    READ_FILE PATH "data.txt" INTO content: TEXT
+    SET_FINAL SOURCE content
+  
+  OUTPUT content
 
 OBSERVATION:
 %s

@@ -11,8 +11,8 @@ func TestLoadTable(t *testing.T) {
 		t.Fatalf("LoadTable failed: %v", err)
 	}
 
-	if tbl.Version != "0.1" {
-		t.Errorf("expected version 0.1, got %s", tbl.Version)
+	if tbl.Version != "0.2" {
+		t.Errorf("expected version 0.2, got %s", tbl.Version)
 	}
 
 	if _, ok := tbl.Ops["STATS"]; !ok {

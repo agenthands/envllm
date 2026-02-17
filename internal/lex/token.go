@@ -18,9 +18,17 @@ const (
 	TypePRINT
 	TypeREQUIRES
 	TypeCapability
+	TypeDIALECT
+	TypeEXT
 	TypeFOR_EACH
 	TypeIN
 	TypeLIMIT
+	TypeTASK
+	TypeINPUT
+	TypeOUTPUT
+	TypeIF
+	TypeELSE
+	TypeEND
 
 	// Literals
 	TypeIdent

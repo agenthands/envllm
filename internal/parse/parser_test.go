@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 	"github.com/agenthands/envllm/internal/lex"
+	"github.com/agenthands/envllm/internal/ast"
 )
 
 func TestParser_Basic(t *testing.T) {
@@ -22,11 +23,11 @@ CELL plan:
 		t.Errorf("expected version 0.1, got %s", prog.Version)
 	}
 
-	if len(prog.Cells) != 1 {
-		t.Fatalf("expected 1 cell, got %d", len(prog.Cells))
+	if prog.Task == nil || len(prog.Task.Body) != 1 {
+		t.Fatalf("expected 1 body item, got %v", prog.Task)
 	}
 
-	cell := prog.Cells[0]
+	cell := prog.Task.Body[0].(*ast.Cell)
 	if cell.Name != "plan" {
 		t.Errorf("expected cell name 'plan', got %s", cell.Name)
 	}
@@ -55,16 +56,16 @@ CELL solve:
 		t.Fatalf("Parse error: %v", err)
 	}
 
-	if len(prog.Cells) != 2 {
-		t.Fatalf("expected 2 cells, got %d", len(prog.Cells))
+	if prog.Task == nil || len(prog.Task.Body) != 2 {
+		t.Fatalf("expected 2 body items, got %v", prog.Task)
 	}
 
-	cell1 := prog.Cells[0]
+	cell1 := prog.Task.Body[0].(*ast.Cell)
 	if len(cell1.Stmts) != 2 {
 		t.Errorf("cell 1: expected 2 stmts, got %d", len(cell1.Stmts))
 	}
 
-	cell2 := prog.Cells[1]
+	cell2 := prog.Task.Body[1].(*ast.Cell)
 	if len(cell2.Stmts) != 4 {
 		t.Errorf("cell 2: expected 4 stmts, got %d", len(cell2.Stmts))
 	}
@@ -117,17 +118,17 @@ func TestParser_StrictMode(t *testing.T) {
 	}{
 		{
 			"Valid strict",
-			"RLMDSL 0.1\nCELL test:\n  STATS SOURCE PROMPT INTO out: JSON\n",
+			"RLMDSL 0.1\nTASK test:\n  CELL test:\n    STATS SOURCE PROMPT INTO out: JSON\n  OUTPUT out\n",
 			false,
 		},
 		{
 			"Invalid indentation in strict",
-			"RLMDSL 0.1\nCELL test:\nSTATS SOURCE PROMPT INTO out: JSON\n",
+			"RLMDSL 0.1\nTASK test:\n  CELL test:\nSTATS SOURCE PROMPT INTO out: JSON\n  OUTPUT out\n",
 			true,
 		},
 		{
 			"Missing type in strict",
-			"RLMDSL 0.1\nCELL test:\n  STATS SOURCE PROMPT INTO out\n",
+			"RLMDSL 0.1\nTASK test:\n  CELL test:\n    STATS SOURCE PROMPT INTO out\n  OUTPUT out\n",
 			true,
 		},
 	}

@@ -13,17 +13,23 @@
 go get github.com/agenthands/envllm
 ```
 
-## CLI Usage
-Execute scripts or start an interactive REPL:
+# CLI Usage
+Execute scripts, validate, or migrate between versions:
 ```bash
-# Validate a script
+# Validate a script (compat mode)
 envllm validate script.rlm
 
-# Run a script
-envllm run script.rlm --timeout 5s
+# Check a script for v0.2 canonical errors (strict mode)
+envllm check script.rlm --mode strict
 
-# Start the REPL
-envllm repl
+# Migrate a v0.1 script to v0.2 STRICT
+envllm migrate script.rlm --from v0.1 --to v0.2
+
+# Format a script to canonical form
+envllm fmt script.rlm --mode strict
+
+# Run a script
+envllm run script.rlm --mode compat --timeout 5s
 ```
 
 ## LangChainGo Integration

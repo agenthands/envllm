@@ -2,92 +2,136 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "RLMDSL AST",
   "type": "object",
-  "required": ["version", "cells"],
+  "required": ["task"],
   "properties": {
     "version": { "type": "string" },
-    "cells": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["name", "stmts"],
-        "properties": {
-          "name": { "type": "string" },
-          "stmts": {
-            "type": "array",
-            "items": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "required": ["type", "op_name", "args", "into"],
-                  "properties": {
-                    "type": { "const": "op" },
-                    "op_name": { "type": "string" },
-                    "args": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": ["kw", "value"],
-                        "properties": {
-                          "kw": { "type": "string" },
-                          "value": { "$ref": "#/$defs/expr" }
-                        }
-                      }
-                    },
-                    "into": { "type": "string" }
-                  }
-                },
-                {
-                  "type": "object",
-                  "required": ["type", "source"],
-                  "properties": {
-                    "type": { "const": "set_final" },
-                    "source": { "$ref": "#/$defs/expr" }
-                  }
-                },
-                {
-                  "type": "object",
-                  "required": ["type", "cond", "message"],
-                  "properties": {
-                    "type": { "const": "assert" },
-                    "cond": { "$ref": "#/$defs/expr" },
-                    "message": { "type": "string" }
-                  }
-                },
-                {
-                  "type": "object",
-                  "required": ["type", "source"],
-                  "properties": {
-                    "type": { "const": "print" },
-                    "source": { "$ref": "#/$defs/expr" }
-                  }
-                },
-                {
-                  "type": "object",
-                  "required": ["type", "iterator", "collection", "limit", "body"],
-                  "properties": {
-                    "type": { "const": "for_each" },
-                    "iterator": { "type": "string" },
-                    "collection": { "type": "string" },
-                    "limit": { "type": "integer" },
-                    "body": {
-                      "type": "array",
-                      "items": { "type": "object" }
-                    }
-                  }
-                }
-              ]
+    "dialect": { "type": "string" },
+    "extensions": { "type": "object", "additionalProperties": { "type": "string" } },
+    "task": {
+      "type": "object",
+      "required": ["name", "body", "output"],
+      "properties": {
+        "name": { "type": "string" },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string" }
             }
           }
-        }
+        },
+        "body": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/body_item" }
+        },
+        "output": { "type": "string" }
       }
     }
   },
   "$defs": {
+    "body_item": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["capability"],
+          "properties": {
+            "capability": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["name", "stmts"],
+          "properties": {
+            "name": { "type": "string" },
+            "stmts": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/stmt" }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "cond", "then_body"],
+          "properties": {
+            "type": { "const": "if" },
+            "cond": { "$ref": "#/$defs/expr" },
+            "then_body": { "type": "array", "items": { "$ref": "#/$defs/body_item" } },
+            "else_body": { "type": "array", "items": { "$ref": "#/$defs/body_item" } }
+          }
+        }
+      ]
+    },
+    "stmt": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "op_name", "args", "into"],
+          "properties": {
+            "type": { "const": "op" },
+            "op_name": { "type": "string" },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["kw", "value"],
+                "properties": {
+                  "kw": { "type": "string" },
+                  "value": { "$ref": "#/$defs/expr" }
+                }
+              }
+            },
+            "into": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "source"],
+          "properties": {
+            "type": { "const": "set_final" },
+            "source": { "$ref": "#/$defs/expr" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "cond", "message"],
+          "properties": {
+            "type": { "const": "assert" },
+            "cond": { "$ref": "#/$defs/expr" },
+            "message": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "source"],
+          "properties": {
+            "type": { "const": "print" },
+            "source": { "$ref": "#/$defs/expr" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "iterator", "collection", "limit", "body"],
+          "properties": {
+            "type": { "const": "for_each" },
+            "iterator": { "type": "string" },
+            "collection": { "type": "string" },
+            "limit": { "type": "integer" },
+            "body": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/stmt" }
+            }
+          }
+        }
+      ]
+    },
     "expr": {
       "type": "object",
       "required": ["kind"],
       "properties": {
-        "kind": { "enum": ["IDENT", "STRING", "INT", "BOOL"] },
+        "kind": { "enum": ["IDENT", "STRING", "INT", "BOOL", "NULL"] },
         "name": { "type": "string" },
         "value": {}
       }

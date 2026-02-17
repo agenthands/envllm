@@ -9,8 +9,10 @@ import (
 	"github.com/agenthands/envllm/internal/lex"
 	"github.com/agenthands/envllm/internal/ops"
 	"github.com/agenthands/envllm/internal/parse"
+	"github.com/agenthands/envllm/internal/lint"
 	"github.com/agenthands/envllm/internal/runtime"
 	"github.com/agenthands/envllm/internal/store"
+	"github.com/agenthands/envllm/internal/trace"
 )
 
 // Program represents a compiled RLM-DSL program.
@@ -43,6 +45,7 @@ type ExecOptions struct {
 	Policy    runtime.Policy
 	Inputs    map[string]runtime.Value
 	TextStore runtime.TextStore
+	TraceSink trace.Sink
 }
 
 // NewTextStore creates a new TextStore.
@@ -71,9 +74,21 @@ func (p *Program) Execute(ctx context.Context, opt ExecOptions) (runtime.ExecRes
 	}
 	reg := ops.NewRegistry(tbl)
 
+	// Perform Linting with Trace
+	lnt := lint.NewLinter(tbl).WithSink(opt.TraceSink)
+	lintErrs := lnt.Lint(p.AST)
+	if len(lintErrs) > 0 {
+		var errs []runtime.Error
+		for _, le := range lintErrs {
+			errs = append(errs, runtime.Error{Code: le.Code, Message: le.Message, Hint: le.Hint})
+		}
+		return runtime.ExecResult{Status: "error", Errors: errs}, nil
+	}
+
 	s := runtime.NewSession(opt.Policy, ts)
 	s.Dispatcher = reg
 	s.Host = opt.Host
+	s.TraceSink = opt.TraceSink
 
 	// Set inputs
 	for k, v := range opt.Inputs {
@@ -83,10 +98,9 @@ func (p *Program) Execute(ctx context.Context, opt ExecOptions) (runtime.ExecRes
 	}
 
 	var lastErr error
-	for _, cell := range p.AST.Cells {
-		if err := s.ExecuteCell(ctx, cell); err != nil {
+	if p.AST.Task != nil {
+		if err := s.ExecuteTask(ctx, p.AST.Task); err != nil {
 			lastErr = err
-			break
 		}
 	}
 

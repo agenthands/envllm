@@ -7,7 +7,10 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 
+	"github.com/agenthands/envllm/internal/ast"
+	"github.com/agenthands/envllm/internal/harness"
 	"github.com/agenthands/envllm/internal/lint"
 	"github.com/agenthands/envllm/internal/ops"
 	"github.com/agenthands/envllm/internal/runtime"
@@ -15,7 +18,18 @@ import (
 )
 
 type Model interface {
-	Complete(ctx context.Context, task, prompt string) (string, error)
+	Complete(ctx context.Context, caseID, task, prompt string) (string, error)
+}
+
+// harnessModelWrapper adapts runner.Model to harness.Model
+type harnessModelWrapper struct {
+	m      Model
+	caseID string
+	task   string
+}
+
+func (w *harnessModelWrapper) Complete(ctx context.Context, prompt string) (string, error) {
+	return w.m.Complete(ctx, w.caseID, w.task, prompt)
 }
 
 type Case struct {
@@ -30,11 +44,17 @@ type Case struct {
 	Host        runtime.Host   `json:"-"`
 }
 
-type dummyHost struct{}
+type dummyHost struct {
+	expectedVal interface{}
+}
 
 func (h *dummyHost) Subcall(ctx context.Context, req runtime.SubcallRequest) (runtime.SubcallResponse, error) {
+	res := h.expectedVal
+	if res == nil {
+		res = map[string]interface{}{}
+	}
 	return runtime.SubcallResponse{
-		Result: runtime.Value{Kind: runtime.KindJSON, V: map[string]interface{}{}},
+		Result: runtime.Value{Kind: runtime.KindJSON, V: res},
 	}, nil
 }
 
@@ -59,9 +79,10 @@ func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, erro
 		return Result{}, fmt.Errorf("failed to read prompt: %v", err)
 	}
 
-	dslCode, err := m.Complete(ctx, c.Task, string(promptBytes))
+	// Setup ops table
+	tbl, err := ops.LoadTable("assets/ops.json")
 	if err != nil {
-		return Result{CaseID: c.ID, Error: fmt.Sprintf("model failed: %v", err)}, nil
+		tbl, _ = ops.LoadTable("../assets/ops.json")
 	}
 
 	mode := envllm.ModeCompat
@@ -69,38 +90,67 @@ func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, erro
 		mode = envllm.ModeStrict
 	}
 
-	prog, err := envllm.Compile(c.ID+".rlm", dslCode, mode)
-	if err != nil {
-		return Result{
-			CaseID: c.ID, 
-			Status: "compile_error", 
-			Error:  fmt.Sprintf("compile failed: %v", err), 
-			Passed: c.Scoring.Mode == "status_compile_error",
-			Code:   dslCode,
-		}, nil
+	var progAST *ast.Program
+	var dslCode string
+
+	// Use Harness for all LLM-generated cases to enable repair loop
+	// BUT skip repair if we actually expect a compile error (negative tests)
+	if c.Scoring.Mode == "status_compile_error" {
+		dslCode, err = m.Complete(ctx, c.ID, c.Task, string(promptBytes))
+		if err != nil {
+			return Result{CaseID: c.ID, Error: fmt.Sprintf("model failed: %v", err)}, nil
+		}
+		prog, err := envllm.Compile(c.ID+".rlm", dslCode, mode)
+		if err != nil {
+			return Result{
+				CaseID: c.ID,
+				Status: "compile_error",
+				Error:  fmt.Sprintf("compile failed: %v", err),
+				Passed: true,
+				Code:   dslCode,
+			}, nil
+		}
+		progAST = prog.AST
+	} else {
+		h := harness.NewHarness(&harnessModelWrapper{m: m, caseID: c.ID, task: c.Task}, tbl)
+		progAST, err = h.GenerateStepByStep(ctx, c.Task, string(promptBytes))
+		if err != nil {
+			status := "error"
+			if strings.Contains(err.Error(), "Parse Error") {
+				status = "compile_error"
+			}
+			return Result{
+				CaseID: c.ID,
+				Status: status,
+				Error:  fmt.Sprintf("harness failed: %v", err),
+				Passed: c.Scoring.Mode == "status_"+status,
+			}, nil
+		}
 	}
 
-	// Setup ops table for linter
-	tbl, err := ops.LoadTable("assets/ops.json")
-	if err != nil {
-		tbl, _ = ops.LoadTable("../assets/ops.json")
-	}
+	// Setup linter
 	lnt := lint.NewLinter(tbl)
-	lintErrs := lnt.Lint(prog.AST)
+	if mode == envllm.ModeStrict || c.Mode == "" { // Default to strict linting for LLM output
+		lnt.WithMode(lint.ModeStrict)
+	}
+	lintErrs := lnt.Lint(progAST)
 	if len(lintErrs) > 0 {
 		var errs []runtime.Error
 		for _, le := range lintErrs {
 			errs = append(errs, runtime.Error{Code: le.Code, Message: le.Message, Hint: le.Hint})
 		}
 		return Result{
-			CaseID: c.ID, 
-			Status: "error", 
-			Error:  fmt.Sprintf("lint failed: %d errors", len(lintErrs)), 
+			CaseID: c.ID,
+			Status: "error",
+			Error:  fmt.Sprintf("lint failed: %d errors", len(lintErrs)),
 			Passed: c.Scoring.Mode == "status_error",
 			Output: runtime.ExecResult{Status: "error", Errors: errs},
 			Code:   dslCode,
 		}, nil
 	}
+
+	// Re-wrap AST into a Program for execution
+	prog := &envllm.Program{AST: progAST}
 
 	// Setup store and PROMPT input
 	ts := envllm.NewTextStore()
@@ -109,7 +159,12 @@ func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, erro
 	// Provide a dummy host for SUBCALL tests
 	host := c.Host
 	if host == nil {
-		host = &dummyHost{}
+		var expectedVal interface{}
+		if c.ExpectedRef != "" {
+			expectedBytes, _ := os.ReadFile(filepath.Join(baseDir, c.ExpectedRef))
+			_ = json.Unmarshal(expectedBytes, &expectedVal)
+		}
+		host = &dummyHost{expectedVal: expectedVal}
 	}
 
 	opt := envllm.ExecOptions{
@@ -126,7 +181,7 @@ func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, erro
 		return Result{CaseID: c.ID, Error: fmt.Sprintf("execution crashed: %v", err), Passed: false, Code: dslCode}, nil
 	}
 
-	passed, mismatch := scoreResult(c, execRes, baseDir)
+	passed, mismatch := scoreResult(c, execRes, baseDir, ts)
 
 	return Result{
 		CaseID:   c.ID,
@@ -138,7 +193,7 @@ func RunCase(ctx context.Context, c Case, m Model, baseDir string) (Result, erro
 	}, nil
 }
 
-func scoreResult(c Case, res runtime.ExecResult, baseDir string) (bool, string) {
+func scoreResult(c Case, res runtime.ExecResult, baseDir string, ts runtime.TextStore) (bool, string) {
 	switch c.Scoring.Mode {
 	case "status_ok":
 		return res.Status == "ok", ""
@@ -169,6 +224,7 @@ func scoreResult(c Case, res runtime.ExecResult, baseDir string) (bool, string) 
 
 		// Handle numeric comparison
 		if ev, ok := expectedVal.(float64); ok {
+			// Try comparing against numeric value
 			if res.Final.Kind == runtime.KindInt || res.Final.Kind == runtime.KindOffset || res.Final.Kind == runtime.KindCost {
 				if gv, ok := res.Final.V.(int); ok {
 					if float64(gv) == ev {
@@ -176,12 +232,35 @@ func scoreResult(c Case, res runtime.ExecResult, baseDir string) (bool, string) 
 					}
 				}
 			}
+			// Try parsing string value as float
+			if res.Final.Kind == runtime.KindText {
+				if h, ok := res.Final.V.(runtime.TextHandle); ok {
+					if str, found := ts.Get(h); found {
+						var parsed float64
+						if _, err := fmt.Sscanf(str, "%f", &parsed); err == nil {
+							if parsed == ev {
+								return true, ""
+							}
+						}
+					}
+				}
+			}
 		}
 
-		if reflect.DeepEqual(res.Final.V, expectedVal) {
+		// Dereference TextHandle if needed
+		finalVal := res.Final.V
+		if res.Final.Kind == runtime.KindText {
+			if h, ok := res.Final.V.(runtime.TextHandle); ok {
+				if str, found := ts.Get(h); found {
+					finalVal = str
+				}
+			}
+		}
+
+		if reflect.DeepEqual(finalVal, expectedVal) {
 			return true, ""
 		}
-		return false, fmt.Sprintf("got %v (%T), want %v (%T)", res.Final.V, res.Final.V, expectedVal, expectedVal)
+		return false, fmt.Sprintf("got %v (%T), want %v (%T)", finalVal, finalVal, expectedVal, expectedVal)
 	default:
 		return res.Status == "ok", ""
 	}

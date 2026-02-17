@@ -249,9 +249,10 @@ func TestRegistry_Dispatch_AllPure(t *testing.T) {
 	}
 
 	// WINDOW_TEXT
+	s.Env.Define("off", runtime.Value{Kind: runtime.KindOffset, V: 0})
 	_, err = reg.Dispatch(s, "WINDOW_TEXT", []ast.KwArg{
 		exprToKwArg("SOURCE", &ast.IdentExpr{Name: "h"}),
-		exprToKwArg("CENTER", &ast.IntExpr{Value: 0}),
+		exprToKwArg("CENTER", &ast.IdentExpr{Name: "off"}),
 		exprToKwArg("RADIUS", &ast.IntExpr{Value: 0}),
 	})
 	if err != nil {

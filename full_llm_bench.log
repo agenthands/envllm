@@ -1,0 +1,2 @@
+# github.com/agenthands/envllm/internal/harness
+internal/harness/harness.go:68:6: declared and not used: lastProg

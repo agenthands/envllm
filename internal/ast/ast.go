@@ -11,26 +11,68 @@ type Node interface {
 
 // Program represents the root of the RLMDSL script.
 type Program struct {
-	Version      string         `json:"version,omitempty"`
-	Requirements []*Requirement `json:"requirements,omitempty"`
-	Cells        []*Cell        `json:"cells,omitempty"`
+	Version    string            `json:"version,omitempty"`
+	Dialect    string            `json:"dialect,omitempty"`
+	Extensions map[string]string `json:"extensions,omitempty"`
+	Task       *Task             `json:"task,omitempty"`
 }
 
 func (p *Program) Pos() lex.Loc {
-	if len(p.Requirements) > 0 {
-		return p.Requirements[0].Loc
-	}
-	if len(p.Cells) > 0 {
-		return p.Cells[0].Pos()
+	if p.Task != nil {
+		return p.Task.Loc
 	}
 	return lex.Loc{}
 }
+
+// Task represents the top-level container for a program.
+type Task struct {
+	Loc    lex.Loc       `json:"-"`
+	Name   string        `json:"name"`
+	Inputs []*InputDecl  `json:"inputs,omitempty"`
+	Body   []BodyItem    `json:"body"`
+	Output string        `json:"output"`
+}
+
+func (t *Task) Pos() lex.Loc { return t.Loc }
+
+// InputDecl represents an INPUT variable declaration.
+type InputDecl struct {
+	Loc  lex.Loc `json:"-"`
+	Name string  `json:"name"`
+	Type string  `json:"type"`
+}
+
+func (i *InputDecl) Pos() lex.Loc { return i.Loc }
+
+// BodyItem is the interface for items allowed in a task or if body.
+type BodyItem interface {
+	Node
+	bodyItemNode()
+}
+
+func (r *Requirement) bodyItemNode() {}
+func (c *Cell) bodyItemNode()        {}
+
+// IfStmt represents an IF/ELSE conditional block.
+type IfStmt struct {
+	Loc      lex.Loc    `json:"-"`
+	Type     string     `json:"type"` // "if"
+	Cond     Expr       `json:"cond"`
+	ThenBody []BodyItem `json:"then_body"`
+	ElseBody []BodyItem `json:"else_body,omitempty"`
+}
+
+func (s *IfStmt) Pos() lex.Loc    { return s.Loc }
+func (s *IfStmt) bodyItemNode()   {}
+func (s *IfStmt) stmtNode()       {} // If can also be used as a statement? EBNF says body_item.
 
 // Requirement represents a REQUIRES capability statement.
 type Requirement struct {
 	Loc        lex.Loc `json:"-"`
 	Capability string  `json:"capability"`
 }
+
+func (r *Requirement) Pos() lex.Loc { return r.Loc }
 
 // Cell represents a block of execution.
 type Cell struct {
@@ -45,6 +87,7 @@ func (c *Cell) Pos() lex.Loc { return c.Loc }
 type Stmt interface {
 	Node
 	stmtNode()
+	BodyItem
 }
 
 // OpStmt represents a standard operation call: OP KW VAL... INTO ident.
@@ -59,6 +102,7 @@ type OpStmt struct {
 
 func (s *OpStmt) Pos() lex.Loc { return s.Loc }
 func (s *OpStmt) stmtNode()   {}
+func (s *OpStmt) bodyItemNode() {}
 
 // KwArg represents a keyword-argument pair.
 type KwArg struct {
@@ -130,6 +174,7 @@ type SetFinalStmt struct {
 
 func (s *SetFinalStmt) Pos() lex.Loc { return s.Loc }
 func (s *SetFinalStmt) stmtNode()   {}
+func (s *SetFinalStmt) bodyItemNode() {}
 
 // AssertStmt represents the ASSERT command.
 type AssertStmt struct {
@@ -141,6 +186,7 @@ type AssertStmt struct {
 
 func (s *AssertStmt) Pos() lex.Loc { return s.Loc }
 func (s *AssertStmt) stmtNode()   {}
+func (s *AssertStmt) bodyItemNode() {}
 
 // PrintStmt represents the PRINT command.
 type PrintStmt struct {
@@ -151,6 +197,7 @@ type PrintStmt struct {
 
 func (s *PrintStmt) Pos() lex.Loc { return s.Loc }
 func (s *PrintStmt) stmtNode()   {}
+func (s *PrintStmt) bodyItemNode() {}
 
 // ForEachStmt represents the FOR_EACH loop.
 type ForEachStmt struct {
@@ -164,3 +211,64 @@ type ForEachStmt struct {
 
 func (s *ForEachStmt) Pos() lex.Loc { return s.Loc }
 func (s *ForEachStmt) stmtNode()   {}
+func (s *ForEachStmt) bodyItemNode() {}
+
+// Visitor interface for AST traversal.
+type Visitor interface {
+	Visit(Node) (w Visitor)
+}
+
+// Walk traverses an AST in depth-first order.
+func Walk(v Visitor, node Node) {
+	if v = v.Visit(node); v == nil {
+		return
+	}
+
+	switch n := node.(type) {
+	case *Program:
+		if n.Task != nil {
+			Walk(v, n.Task)
+		}
+	case *Task:
+		for _, in := range n.Inputs {
+			Walk(v, in)
+		}
+		for _, item := range n.Body {
+			Walk(v, item)
+		}
+	case *InputDecl:
+		// Leaf
+	case *IfStmt:
+		Walk(v, n.Cond)
+		for _, item := range n.ThenBody {
+			Walk(v, item)
+		}
+		for _, item := range n.ElseBody {
+			Walk(v, item)
+		}
+	case *Requirement:
+		// Leaf
+	case *Cell:
+		for _, stmt := range n.Stmts {
+			Walk(v, stmt)
+		}
+	case *OpStmt:
+		for _, arg := range n.Args {
+			Walk(v, arg.Value)
+		}
+	case *SetFinalStmt:
+		Walk(v, n.Source)
+	case *AssertStmt:
+		Walk(v, n.Cond)
+	case *PrintStmt:
+		Walk(v, n.Source)
+	case *ForEachStmt:
+		for _, stmt := range n.Body {
+			Walk(v, stmt)
+		}
+	case *IdentExpr, *StringExpr, *IntExpr, *BoolExpr, *NullExpr:
+		// Leaf
+	}
+
+	v.Visit(nil)
+}

@@ -17,35 +17,88 @@ func Format(prog *ast.Program) string {
 		sb.WriteString("\n")
 	}
 
-	for _, req := range prog.Requirements {
-		sb.WriteString("REQUIRES capability=")
-		sb.WriteString(quoteString(req.Capability))
+	if prog.Dialect != "" {
+		sb.WriteString("DIALECT ")
+		sb.WriteString(prog.Dialect)
 		sb.WriteString("\n")
 	}
 
-	for i, cell := range prog.Cells {
-		if i > 0 || prog.Version != "" {
+	for ext, ver := range prog.Extensions {
+		sb.WriteString("EXT ")
+		sb.WriteString(ext)
+		sb.WriteString("=")
+		sb.WriteString(ver)
+		sb.WriteString("\n")
+	}
+
+	if prog.Task != nil {
+		if prog.Version != "" || prog.Dialect != "" || len(prog.Extensions) > 0 {
 			sb.WriteString("\n")
 		}
-		formatCell(&sb, cell)
+		formatTask(&sb, prog.Task)
 	}
 
 	return sb.String()
 }
 
-func formatCell(sb *strings.Builder, cell *ast.Cell) {
-	sb.WriteString("CELL ")
-	sb.WriteString(cell.Name)
+func formatTask(sb *strings.Builder, t *ast.Task) {
+	sb.WriteString("TASK ")
+	sb.WriteString(t.Name)
 	sb.WriteString(":\n")
 
-	for _, stmt := range cell.Stmts {
-		sb.WriteString("  ")
-		formatStmt(sb, stmt)
+	for _, in := range t.Inputs {
+		sb.WriteString("  INPUT ")
+		sb.WriteString(in.Name)
+		sb.WriteString(": ")
+		sb.WriteString(in.Type)
 		sb.WriteString("\n")
+	}
+
+	formatBody(sb, t.Body, 2)
+
+	sb.WriteString("  OUTPUT ")
+	sb.WriteString(t.Output)
+	sb.WriteString("\n")
+}
+
+func formatBody(sb *strings.Builder, body []ast.BodyItem, indent int) {
+	indentStr := strings.Repeat(" ", indent)
+	for _, item := range body {
+		switch it := item.(type) {
+		case *ast.Requirement:
+			sb.WriteString(indentStr)
+			sb.WriteString("REQUIRES capability=")
+			sb.WriteString(quoteString(it.Capability))
+			sb.WriteString("\n")
+		case *ast.Cell:
+			sb.WriteString(indentStr)
+			sb.WriteString("CELL ")
+			sb.WriteString(it.Name)
+			sb.WriteString(":\n")
+			for _, stmt := range it.Stmts {
+				sb.WriteString(indentStr)
+				sb.WriteString("  ")
+				formatStmt(sb, stmt, indent+2)
+				sb.WriteString("\n")
+			}
+		case *ast.IfStmt:
+			sb.WriteString(indentStr)
+			sb.WriteString("IF ")
+			formatExpr(sb, it.Cond)
+			sb.WriteString(":\n")
+			formatBody(sb, it.ThenBody, indent)
+			if it.ElseBody != nil {
+				sb.WriteString(indentStr)
+				sb.WriteString("ELSE:\n")
+				formatBody(sb, it.ElseBody, indent)
+			}
+			sb.WriteString(indentStr)
+			sb.WriteString("END\n")
+		}
 	}
 }
 
-func formatStmt(sb *strings.Builder, stmt ast.Stmt) {
+func formatStmt(sb *strings.Builder, stmt ast.Stmt, indent int) {
 	switch s := stmt.(type) {
 	case *ast.OpStmt:
 		sb.WriteString(s.OpName)
@@ -80,9 +133,10 @@ func formatStmt(sb *strings.Builder, stmt ast.Stmt) {
 		sb.WriteString(" LIMIT ")
 		sb.WriteString(fmt.Sprintf("%d", s.Limit))
 		sb.WriteString(":\n")
+		indentStr := strings.Repeat(" ", indent+2)
 		for _, bs := range s.Body {
-			sb.WriteString("    ") // 4 spaces
-			formatStmt(sb, bs)
+			sb.WriteString(indentStr)
+			formatStmt(sb, bs, indent+2)
 			sb.WriteString("\n")
 		}
 	}

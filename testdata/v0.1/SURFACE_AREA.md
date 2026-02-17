@@ -39,6 +39,8 @@
 - `SET_FINAL SOURCE <expr>`
 - `ASSERT COND <expr> MESSAGE <string>`
 - `PRINT SOURCE <expr>`
+- `FOR_EACH <ident> IN <ident> LIMIT <int>:`
+- `IF <expr>:` / `ELSE:` / `END`
 
 ## Block Structure
 - `CELL <name>:` followed by lines.

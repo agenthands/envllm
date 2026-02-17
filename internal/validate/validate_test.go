@@ -14,8 +14,10 @@ func TestValidator(t *testing.T) {
 	}
 
 	input := `RLMDSL 0.1
-CELL plan:
-  STATS SOURCE PROMPT INTO stats
+TASK plan:
+  CELL plan:
+    STATS SOURCE PROMPT INTO stats
+  OUTPUT stats
 `
 	l := lex.NewLexer("test.rlm", input)
 	p := parse.NewParser(l, parse.ModeCompat)

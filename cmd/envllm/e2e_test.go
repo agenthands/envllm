@@ -44,11 +44,9 @@ CELL find:
 	}
 
 	// 4. Execute
-	for _, cell := range prog.Cells {
-		err = s.ExecuteCell(context.Background(), cell)
-		if err != nil {
-			t.Fatalf("ExecuteCell %s failed: %v", cell.Name, err)
-		}
+	err = s.ExecuteTask(context.Background(), prog.Task)
+	if err != nil {
+		t.Fatalf("ExecuteTask failed: %v", err)
 	}
 
 	// 5. Verify
@@ -96,8 +94,8 @@ CELL recurse:
 	p := parse.NewParser(l, parse.ModeCompat)
 	prog, _ := p.Parse()
 
-	for _, cell := range prog.Cells {
-		_ = s.ExecuteCell(context.Background(), cell)
+	for i := 0; i < 1; i++ {
+		_ = s.ExecuteTask(context.Background(), prog.Task)
 	}
 
 	if s.SubcallCount != 1 {
@@ -137,8 +135,8 @@ CELL regex:
 	p := parse.NewParser(l, parse.ModeCompat)
 	prog, _ := p.Parse()
 
-	for _, cell := range prog.Cells {
-		_ = s.ExecuteCell(context.Background(), cell)
+	for i := 0; i < 1; i++ {
+		_ = s.ExecuteTask(context.Background(), prog.Task)
 	}
 
 	if s.Final == nil || s.Final.Kind != runtime.KindSpan {
@@ -158,7 +156,7 @@ CELL denied:
 	p2 := parse.NewParser(l2, parse.ModeCompat)
 	prog2, _ := p2.Parse()
 
-	err := s.ExecuteCell(context.Background(), prog2.Cells[0])
+	err := s.ExecuteTask(context.Background(), prog2.Task)
 	if err == nil || !strings.Contains(err.Error(), "denied by policy") {
 		t.Errorf("expected capability denied error, got %v", err)
 	}
@@ -196,8 +194,8 @@ CELL fs:
 	p := parse.NewParser(l, parse.ModeCompat)
 	prog, _ := p.Parse()
 
-	for _, cell := range prog.Cells {
-		_ = s.ExecuteCell(context.Background(), cell)
+	for i := 0; i < 1; i++ {
+		_ = s.ExecuteTask(context.Background(), prog.Task)
 	}
 
 	if s.Final == nil || s.Final.Kind != runtime.KindText {

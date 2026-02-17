@@ -3,17 +3,57 @@ package lint
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/agenthands/envllm/internal/ast"
 	"github.com/agenthands/envllm/internal/ops"
+	"github.com/agenthands/envllm/internal/rewrite"
+	"github.com/agenthands/envllm/internal/trace"
 )
 
 type Linter struct {
-	table *ops.Table
+	table    *ops.Table
+	sink     trace.Sink
+	registry *rewrite.Registry
+	mode     Mode
 }
 
+type Mode int
+
+const (
+	ModeCompat Mode = iota
+	ModeStrict
+)
+
 func NewLinter(table *ops.Table) *Linter {
-	return &Linter{table: table}
+	return &Linter{table: table, mode: ModeCompat}
+}
+
+func (l *Linter) WithMode(mode Mode) *Linter {
+	l.mode = mode
+	return l
+}
+
+func (l *Linter) WithSink(sink trace.Sink) *Linter {
+	l.sink = sink
+	return l
+}
+
+func (l *Linter) WithRegistry(registry *rewrite.Registry) *Linter {
+	l.registry = registry
+	return l
+}
+
+func (l *Linter) emitTrace(step trace.TraceStep) {
+	if l.sink != nil {
+		if step.Timestamp.IsZero() {
+			step.Timestamp = time.Now()
+		}
+		if step.Phase == "" {
+			step.Phase = trace.PhaseLint
+		}
+		l.sink.Emit(step)
+	}
 }
 
 func (l *Linter) Lint(prog *ast.Program) []Error {
@@ -21,43 +61,106 @@ func (l *Linter) Lint(prog *ast.Program) []Error {
 	symbols := make(map[string]string) // name -> type
 	requiredCaps := make(map[string]bool)
 
-	// 1. Process Requirements
-	for _, req := range prog.Requirements {
-		requiredCaps[req.Capability] = true
+	if prog.Task == nil {
+		return errs
 	}
 
-	for _, cell := range prog.Cells {
-		for _, stmt := range cell.Stmts {
-			switch s := stmt.(type) {
-			case *ast.OpStmt:
-				opErrs, outType := l.lintOpStmt(s, symbols, requiredCaps)
-				errs = append(errs, opErrs...)
-				if s.Into != "" {
-					if _, exists := symbols[s.Into]; exists {
-						errs = append(errs, Error{
-							Code:    "LINT_VAR_REUSE_FORBIDDEN",
-							Message: fmt.Sprintf("variable %q already defined", s.Into),
-							Loc:     s.Loc,
-							Hint:    fmt.Sprintf("Rename to %s_2 or %s_step%d", s.Into, s.Into, len(symbols)),
-						})
-					} else {
-						if outType != "" {
-							symbols[s.Into] = outType
-						} else {
-							symbols[s.Into] = "UNKNOWN"
-						}
-					}
-				}
-			case *ast.SetFinalStmt:
-				errs = append(errs, l.lintExpr(s.Source, "", symbols)...)
-			case *ast.PrintStmt:
-				errs = append(errs, l.lintExpr(s.Source, "", symbols)...)
-			case *ast.AssertStmt:
-				errs = append(errs, l.lintExpr(s.Cond, "BOOL", symbols)...)
+	// 1. Process Inputs
+	for _, in := range prog.Task.Inputs {
+		symbols[in.Name] = in.Type
+	}
+
+	// 2. Process Body
+	errs = append(errs, l.lintBody(prog.Task.Body, symbols, requiredCaps)...)
+
+	// 3. Process Output
+	if prog.Task.Output != "" {
+		if _, ok := symbols[prog.Task.Output]; !ok {
+			err := Error{
+				Code:    "LINT_UNDEFINED_VAR",
+				Message: fmt.Sprintf("task output variable %q not defined", prog.Task.Output),
+				Loc:     prog.Task.Loc,
 			}
+			errs = append(errs, err)
+			l.emitTrace(trace.TraceStep{
+				Decision: trace.DecisionReject,
+				Error:    &trace.TraceError{Code: err.Code, Message: err.Message},
+			})
 		}
 	}
 
+	if len(errs) == 0 {
+		l.emitTrace(trace.TraceStep{
+			Decision: trace.DecisionAccept,
+		})
+	}
+
+	return errs
+}
+
+func (l *Linter) lintBody(body []ast.BodyItem, symbols map[string]string, requiredCaps map[string]bool) []Error {
+	var errs []Error
+	for _, item := range body {
+		errs = append(errs, l.lintBodyItem(item, symbols, requiredCaps)...)
+	}
+	return errs
+}
+
+func (l *Linter) lintBodyItem(item ast.BodyItem, symbols map[string]string, requiredCaps map[string]bool) []Error {
+	switch it := item.(type) {
+	case *ast.Requirement:
+		requiredCaps[it.Capability] = true
+		return nil
+	case *ast.Cell:
+		return l.lintStmts(it.Stmts, symbols, requiredCaps)
+	case *ast.IfStmt:
+		var errs []Error
+		errs = append(errs, l.lintExpr(it.Cond, "BOOL", symbols)...)
+		errs = append(errs, l.lintBody(it.ThenBody, symbols, requiredCaps)...)
+		if it.ElseBody != nil {
+			errs = append(errs, l.lintBody(it.ElseBody, symbols, requiredCaps)...)
+		}
+		return errs
+	case ast.Stmt:
+		return l.lintStmts([]ast.Stmt{it}, symbols, requiredCaps)
+	default:
+		return []Error{{Code: "LINT_INTERNAL_ERROR", Message: fmt.Sprintf("unhandled body item: %T", item)}}
+	}
+}
+
+func (l *Linter) lintStmts(stmts []ast.Stmt, symbols map[string]string, requiredCaps map[string]bool) []Error {
+	var errs []Error
+	for _, stmt := range stmts {
+		switch s := stmt.(type) {
+		case *ast.OpStmt:
+			opErrs, outType := l.lintOpStmt(s, symbols, requiredCaps)
+			errs = append(errs, opErrs...)
+			if s.Into != "" {
+				if _, exists := symbols[s.Into]; exists {
+					errs = append(errs, Error{
+						Code:    "LINT_VAR_REUSE_FORBIDDEN",
+						Message: fmt.Sprintf("variable %q already defined", s.Into),
+						Loc:     s.Loc,
+						Hint:    fmt.Sprintf("Rename to %s_2 or %s_step%d", s.Into, s.Into, len(symbols)),
+					})
+				} else {
+					if outType != "" {
+						symbols[s.Into] = outType
+					} else {
+						symbols[s.Into] = "UNKNOWN"
+					}
+				}
+			}
+		case *ast.SetFinalStmt:
+			errs = append(errs, l.lintExpr(s.Source, "", symbols)...)
+		case *ast.PrintStmt:
+			errs = append(errs, l.lintExpr(s.Source, "", symbols)...)
+		case *ast.AssertStmt:
+			errs = append(errs, l.lintExpr(s.Cond, "BOOL", symbols)...)
+		case *ast.ForEachStmt:
+			// No-op for now
+		}
+	}
 	return errs
 }
 
@@ -80,11 +183,19 @@ func (l *Linter) lintOpStmt(s *ast.OpStmt, symbols map[string]string, caps map[s
 			continue
 		}
 		if !caps[c] {
-			errs = append(errs, Error{
+			err := Error{
 				Code:    "LINT_MISSING_REQUIRES",
 				Message: fmt.Sprintf("operation %s requires capability %q but it was not declared with REQUIRES", s.OpName, c),
 				Loc:     s.Loc,
 				Hint:    fmt.Sprintf("Add 'REQUIRES capability=%q' to the top of your program.", c),
+			}
+			errs = append(errs, err)
+			l.emitTrace(trace.TraceStep{
+				Decision: trace.DecisionReject,
+				Op:       s.OpName,
+				Error:    &trace.TraceError{Code: err.Code, Message: err.Message},
+				RuleID:   "RULE_MISSING_REQUIRES",
+				Hint:     err.Hint,
 			})
 		}
 	}
@@ -142,6 +253,18 @@ func (l *Linter) lintOpStmt(s *ast.OpStmt, symbols map[string]string, caps map[s
 			if !isEnumVal {
 				errs = append(errs, l.lintExpr(arg.Value, string(param.Type), symbols)...)
 			}
+
+			// EPIC: Forbid literal offset arithmetic in STRICT mode
+			if l.mode == ModeStrict && s.OpName == "OFFSET_ADD" && param.Kw == "AMOUNT" {
+				if _, ok := arg.Value.(*ast.IntExpr); ok {
+					errs = append(errs, Error{
+						Code:    "LINT_OFFSET_ARITHMETIC_FORBIDDEN",
+						Message: "Literal offset arithmetic (+7, -3) is forbidden in STRICT mode.",
+						Loc:     s.Loc,
+						Hint:    "Use AFTER_TEXT or FIND_REGEX groups instead of hardcoding character counts.",
+					})
+				}
+			}
 		}
 	}
 
@@ -189,12 +312,20 @@ func (l *Linter) lintExpr(expr ast.Expr, expectedType string, symbols map[string
 				hint = fmt.Sprintf("Use JSON_GET SOURCE %s PATH \"%s\" INTO val: JSON", obj, prop)
 			}
 
-			errs = append(errs, Error{
+			err := Error{
 				Code:             "LINT_DOT_ACCESS_FORBIDDEN",
 				Message:          fmt.Sprintf("Dot access (%s) is not allowed in STRICT mode.", e.Name),
 				Loc:              e.Pos(),
 				Hint:             hint,
 				ExpectedTemplate: hint, // Reuse hint as template for now
+			}
+			errs = append(errs, err)
+			l.emitTrace(trace.TraceStep{
+				Decision: trace.DecisionReject,
+				Op:       e.Name,
+				Error:    &trace.TraceError{Code: err.Code, Message: err.Message},
+				RuleID:   "RULE_DOT_ACCESS_TO_GETTER",
+				Hint:     err.Hint,
 			})
 			return errs
 		}
@@ -240,6 +371,10 @@ func (l *Linter) lintExpr(expr ast.Expr, expectedType string, symbols map[string
 				hint = fmt.Sprintf("Use TO_TEXT VALUE=%s to convert.", l.getExprName(expr))
 			} else if expectedType == "OFFSET" && actualType == "INT" {
 				hint = fmt.Sprintf("Use OFFSET VALUE=%s to create a position.", l.getExprName(expr))
+			} else if expectedType == "STRUCT" && actualType == "SPAN" {
+				hint = "SPAN is not a STRUCT. Use GET_SPAN_START or GET_SPAN_END to get offsets from a SPAN."
+			} else if expectedType == "OFFSET" && actualType == "SPAN" {
+				hint = "You passed a SPAN where an OFFSET was expected. Use GET_SPAN_START or GET_SPAN_END."
 			}
 
 			errs = append(errs, Error{
