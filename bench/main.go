@@ -86,13 +86,13 @@ func (m *RealLLMModel) Complete(ctx context.Context, caseID, task, prompt string
 		fullPrompt += "\n\nIMPORTANT: Use VALUE_AFTER_DELIM or similar spatial ops to extract the string labeled 'Escaped test:'. DO NOT count characters manually."
 	}
 	if strings.HasPrefix(caseID, "E") {
-		fullPrompt += "\n\nIMPORTANT: You MUST solve this using spatial primitives. Use AFTER_TEXT corpus=PROMPT needle=\"is: \" to find the start, then SLICE_TEXT. DO NOT use literal offsets like OFFSET VALUE 10."
+		fullPrompt += "\n\nIMPORTANT: Use EXTRACT_VALUE SOURCE PROMPT KEY \"is: \" UNTIL \" \" to extract the value. DO NOT use literal offsets."
 	}
 	if strings.HasPrefix(caseID, "H") {
 		fullPrompt += "\n\nCRITICAL: You MUST use the 'READ_FILE' operation on the path provided. Do not just print the path."
 	}
 	if strings.HasPrefix(caseID, "F") {
-		fullPrompt += "\n\nIMPORTANT: The prompt contains a 'JSON DATA: ' preamble. You MUST use FIND_TEXT and SLICE_TEXT to isolate the '{...}' JSON block before calling JSON_PARSE."
+		fullPrompt += "\n\nIMPORTANT: The prompt contains a 'JSON DATA: ' preamble. Use EXTRACT_JSON SOURCE PROMPT to automatically find and parse the JSON block."
 	}
 
 	return llms.GenerateFromSinglePrompt(ctx, m.model, fullPrompt)

@@ -241,6 +241,32 @@ func ValueAfterDelim(s *runtime.Session, source runtime.Value, delim runtime.Val
 	return runtime.Value{Kind: runtime.KindSpan, V: runtime.Span{Start: start, End: start + loc[0]}}, nil
 }
 
+// ExtractValue finds a key and returns the text until a delimiter.
+func ExtractValue(s *runtime.Session, source runtime.Value, key runtime.Value, until runtime.Value) (runtime.Value, error) {
+	h := source.V.(runtime.TextHandle)
+	text, _ := s.Stores.Text.Get(h)
+
+	kh := key.V.(runtime.TextHandle)
+	ktext, _ := s.Stores.Text.Get(kh)
+
+	uh := until.V.(runtime.TextHandle)
+	utext, _ := s.Stores.Text.Get(uh)
+
+	startPos := strings.Index(text, ktext)
+	if startPos == -1 {
+		return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add("")}, nil
+	}
+
+	valStart := startPos + len(ktext)
+	valEnd := strings.Index(text[valStart:], utext)
+	if valEnd == -1 {
+		// Take until end of text
+		return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(text[valStart:])}, nil
+	}
+
+	return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(text[valStart : valStart+valEnd])}, nil
+}
+
 // GetSpanStart implements the GET_SPAN_START operation.
 func GetSpanStart(s *runtime.Session, source runtime.Value) (runtime.Value, error) {
 	span := source.V.(runtime.Span)

@@ -230,7 +230,8 @@ RECOVERY TIPS:
 - If you need to do math on an OFFSET (e.g. +1), use OFFSET_ADD. Do NOT use CONCAT.
 - If you need to read a struct field (e.g. stats.lines), use GET_FIELD. Do NOT use dot notation.
 - If you need to loop, use FOR_EACH with a LIMIT.
-- If the PROMPT contains text and JSON, use FIND_TEXT and SLICE_TEXT to isolate the JSON before using JSON_PARSE.
+- Use EXTRACT_JSON SOURCE PROMPT to automatically find and parse JSON data.
+- If the PROMPT contains text and JSON, EXTRACT_JSON is safer than JSON_PARSE.
 - CAPABILITY MAPPING:
   - SUBCALL -> capability="llm"
   - READ_FILE -> capability="fs_read"

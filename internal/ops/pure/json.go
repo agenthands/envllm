@@ -21,6 +21,27 @@ func JSONParse(s *runtime.Session, source runtime.Value) (runtime.Value, error) 
 	return runtime.Value{Kind: runtime.KindJSON, V: v}, nil
 }
 
+// ExtractJSON isolates and parses the first JSON object found in text.
+func ExtractJSON(s *runtime.Session, source runtime.Value) (runtime.Value, error) {
+	h := source.V.(runtime.TextHandle)
+	text, _ := s.Stores.Text.Get(h)
+
+	start := strings.Index(text, "{")
+	end := strings.LastIndex(text, "}")
+
+	if start == -1 || end == -1 || end <= start {
+		return runtime.Value{}, fmt.Errorf("EXTRACT_JSON: no JSON object found in text")
+	}
+
+	jsonStr := text[start : end+1]
+	var data interface{}
+	if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+		return runtime.Value{}, fmt.Errorf("EXTRACT_JSON failed to parse: %v", err)
+	}
+
+	return runtime.Value{Kind: runtime.KindJSON, V: data}, nil
+}
+
 // JSONGet implements the JSON_GET operation.
 // Simplistic implementation for now: only works for maps.
 func JSONGet(s *runtime.Session, source runtime.Value, path string) (runtime.Value, error) {

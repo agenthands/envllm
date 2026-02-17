@@ -63,10 +63,33 @@ func (m *CoreModule) Operations() []Op {
 			{Kw: "DELIM", Type: runtime.KindText},
 			{Kw: "UNTIL", Type: runtime.KindText},
 		}, Into: true},
+		{Name: "EXTRACT_JSON", Capabilities: []string{"pure"}, ResultType: runtime.KindJSON, Signature: []Param{
+			{Kw: "SOURCE", Type: runtime.KindText},
+		}, Into: true},
+		{Name: "EXTRACT_VALUE", Capabilities: []string{"pure"}, ResultType: runtime.KindText, Signature: []Param{
+			{Kw: "SOURCE", Type: runtime.KindText},
+			{Kw: "KEY", Type: runtime.KindText},
+			{Kw: "UNTIL", Type: runtime.KindText},
+		}, Into: true},
 		{Name: "JSON_PARSE", Capabilities: []string{"pure"}, ResultType: runtime.KindJSON, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindText}}, Into: true},
 		{Name: "JSON_GET", Capabilities: []string{"pure"}, ResultType: runtime.KindJSON, Signature: []Param{
 			{Kw: "SOURCE", Type: runtime.KindJSON},
 			{Kw: "PATH", Type: runtime.KindText},
+		}, Into: true},
+		{Name: "SELECT_FIELDS", Capabilities: []string{"pure"}, ResultType: runtime.KindRows, Signature: []Param{
+			{Kw: "SOURCE", Type: runtime.KindRows},
+			{Kw: "FIELDS", Type: runtime.KindList},
+		}, Into: true},
+		{Name: "FILTER_ROWS", Capabilities: []string{"pure"}, ResultType: runtime.KindRows, Signature: []Param{
+			{Kw: "SOURCE", Type: runtime.KindRows},
+			{Kw: "KEY", Type: runtime.KindText},
+			{Kw: "OP", Enum: []string{"==", "!=", ">", "<"}},
+			{Kw: "VALUE", Type: ""},
+		}, Into: true},
+		{Name: "AGGREGATE_ROWS", Capabilities: []string{"pure"}, ResultType: runtime.KindRows, Signature: []Param{
+			{Kw: "SOURCE", Type: runtime.KindRows},
+			{Kw: "GROUP_BY", Type: runtime.KindText},
+			{Kw: "COMPUTE", Enum: []string{"COUNT", "SUM", "AVG"}},
 		}, Into: true},
 		{Name: "GET_SPAN_START", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindSpan}}, Into: true},
 		{Name: "GET_SPAN_END", Capabilities: []string{"pure"}, ResultType: runtime.KindOffset, Signature: []Param{{Kw: "SOURCE", Type: runtime.KindSpan}}, Into: true},
@@ -135,6 +158,12 @@ func (m *CoreModule) Handlers() map[string]OpImplementation {
 		"VALUE_AFTER_DELIM": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			return pure.ValueAfterDelim(s, args[0], args[1], args[2])
 		},
+		"EXTRACT_JSON": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.ExtractJSON(s, args[0])
+		},
+		"EXTRACT_VALUE": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.ExtractValue(s, args[0], args[1], args[2])
+		},
 		"JSON_PARSE": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			return pure.JSONParse(s, args[0])
 		},
@@ -142,6 +171,21 @@ func (m *CoreModule) Handlers() map[string]OpImplementation {
 			path := ""
 			if p, ok := args[1].V.(string); ok { path = p } else if h, ok := args[1].V.(runtime.TextHandle); ok { path, _ = s.Stores.Text.Get(h) }
 			return pure.JSONGet(s, args[0], path)
+		},
+		"SELECT_FIELDS": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			return pure.SelectFields(s, args[0], args[1])
+		},
+		"FILTER_ROWS": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			h := args[1].V.(runtime.TextHandle)
+			key, _ := s.Stores.Text.Get(h)
+			op := args[2].V.(string)
+			return pure.FilterRows(s, args[0], key, op, args[3])
+		},
+		"AGGREGATE_ROWS": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
+			h := args[1].V.(runtime.TextHandle)
+			groupBy, _ := s.Stores.Text.Get(h)
+			compute := args[2].V.(string)
+			return pure.AggregateRows(s, args[0], groupBy, compute)
 		},
 		"GET_SPAN_START": func(s *runtime.Session, args []runtime.Value) (runtime.Value, error) {
 			return pure.GetSpanStart(s, args[0])

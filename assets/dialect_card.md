@@ -21,6 +21,11 @@ Every program MUST follow this block hierarchy:
 ### **Common Operations**
 - `STATS SOURCE <TEXT> INTO <var>: STRUCT`
 - `GET_FIELD SOURCE <STRUCT> FIELD <TEXT> INTO <var>: JSON`
+- `EXTRACT_JSON SOURCE <TEXT> INTO <var>: JSON` (One-shot find and parse)
+- `EXTRACT_VALUE SOURCE <TEXT> KEY <TEXT> UNTIL <TEXT> INTO <var>: TEXT` (Semantic extraction)
+- `SELECT_FIELDS SOURCE <ROWS> FIELDS <LIST> INTO <var>: ROWS` (Pick specific columns)
+- `FILTER_ROWS SOURCE <ROWS> KEY <TEXT> OP ==|!=|>|< VALUE <ANY> INTO <var>: ROWS` (Filter tabular data)
+- `AGGREGATE_ROWS SOURCE <ROWS> GROUP_BY <TEXT> COMPUTE COUNT|SUM|AVG INTO <var>: ROWS` (Summarize data)
 - `FIND_TEXT SOURCE <TEXT> NEEDLE <TEXT> MODE FIRST|LAST IGNORE_CASE true|false INTO <var>: OFFSET`
 - `WINDOW_TEXT SOURCE <TEXT> CENTER <OFFSET> RADIUS <INT> INTO <var>: TEXT`
 - `SLICE_TEXT SOURCE <TEXT> START <OFFSET> END <OFFSET> INTO <var>: TEXT`

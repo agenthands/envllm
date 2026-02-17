@@ -107,6 +107,28 @@
       "into": true
     },
     {
+      "name": "EXTRACT_VALUE",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "TEXT",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        },
+        {
+          "kw": "KEY",
+          "type": "TEXT"
+        },
+        {
+          "kw": "UNTIL",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
       "name": "JSON_PARSE",
       "capabilities": [
         "pure"
@@ -297,6 +319,95 @@
         {
           "kw": "UNTIL",
           "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "EXTRACT_JSON",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "JSON",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "TEXT"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "SELECT_FIELDS",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "ROWS",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "ROWS"
+        },
+        {
+          "kw": "FIELDS",
+          "type": "LIST"
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "FILTER_ROWS",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "ROWS",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "ROWS"
+        },
+        {
+          "kw": "KEY",
+          "type": "TEXT"
+        },
+        {
+          "kw": "OP",
+          "enum": [
+            "==",
+            "!=",
+            ">",
+            "<"
+          ]
+        },
+        {
+          "kw": "VALUE",
+          "type": ""
+        }
+      ],
+      "into": true
+    },
+    {
+      "name": "AGGREGATE_ROWS",
+      "capabilities": [
+        "pure"
+      ],
+      "result_type": "ROWS",
+      "signature": [
+        {
+          "kw": "SOURCE",
+          "type": "ROWS"
+        },
+        {
+          "kw": "GROUP_BY",
+          "type": "TEXT"
+        },
+        {
+          "kw": "COMPUTE",
+          "enum": [
+            "COUNT",
+            "SUM",
+            "AVG"
+          ]
         }
       ],
       "into": true
