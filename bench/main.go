@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/agenthands/envllm/bench/runner"
 	"github.com/tmc/langchaingo/llms"
@@ -86,7 +87,7 @@ func (m *RealLLMModel) Complete(ctx context.Context, caseID, task, prompt string
 		fullPrompt += "\n\nIMPORTANT: Use VALUE_AFTER_DELIM or similar spatial ops to extract the string labeled 'Escaped test:'. DO NOT count characters manually."
 	}
 	if strings.HasPrefix(caseID, "E") {
-		fullPrompt += "\n\nIMPORTANT: Use EXTRACT_VALUE SOURCE PROMPT KEY \"is: \" UNTIL \" \" to extract the value. DO NOT use literal offsets."
+		fullPrompt += "\n\nIMPORTANT: Use EXTRACT_VALUE SOURCE PROMPT KEY \"is: \" UNTIL \"\\n\" to extract the value. This will safely capture until the end of the line or file."
 	}
 	if strings.HasPrefix(caseID, "H") {
 		fullPrompt += "\n\nCRITICAL: You MUST use the 'READ_FILE' operation on the path provided. Do not just print the path."
@@ -229,6 +230,11 @@ func runSuite(ctx context.Context, path string, m runner.Model, baseDir string, 
 		}
 		for _, e := range res.Output.Errors {
 			fmt.Printf("    DSL Error: [%s] %s\n", e.Code, e.Message)
+		}
+		
+		// Avoid rate limits
+		if _, ok := m.(*RealLLMModel); ok {
+			time.Sleep(1 * time.Second)
 		}
 	}
 }

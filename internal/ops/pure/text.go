@@ -261,10 +261,12 @@ func ExtractValue(s *runtime.Session, source runtime.Value, key runtime.Value, u
 	valEnd := strings.Index(text[valStart:], utext)
 	if valEnd == -1 {
 		// Take until end of text
-		return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(text[valStart:])}, nil
+		result := strings.TrimSpace(text[valStart:])
+		return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(result)}, nil
 	}
 
-	return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(text[valStart : valStart+valEnd])}, nil
+	result := strings.TrimSpace(text[valStart : valStart+valEnd])
+	return runtime.Value{Kind: runtime.KindText, V: s.Stores.Text.Add(result)}, nil
 }
 
 // GetSpanStart implements the GET_SPAN_START operation.
